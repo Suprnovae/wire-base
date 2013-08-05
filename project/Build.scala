@@ -12,6 +12,7 @@ object ApplicationBuild extends Build {
     jdbc,
     anorm,
     "org.postgresql" % "postgresql" % "9.2-1003-jdbc4"
+    //"org.spec2" %% "specs2" % "2.1.1" % "test"
   )
 
 
