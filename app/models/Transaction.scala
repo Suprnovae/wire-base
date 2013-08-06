@@ -22,7 +22,7 @@ case class Sender(
 )
 
 case class Transaction(
-  id: UUID,
+  id: Option[UUID],
   amount: BigDecimal,
   receiver: Receiver,
   sender: Sender
@@ -61,14 +61,14 @@ object Transaction {
     get[String]("transactions.sender_email")~
     get[String]("transactions.sender_city")~
     get[String]("transactions.sender_country") map {
-      case id~v~rn~rp~rc~sn~sa~sp~se~sc~sl => Transaction(id, v,
+      case id~v~rn~rp~rc~sn~sa~sp~se~sc~sl => Transaction(Some(id), v,
         Receiver(rn, rp, rc),
         Sender(sn, sp, sl, sc, sa, None, se)
       )
     }
   }
   def all(): List[Transaction] = List[Transaction]()
-  def findById(id: Any): Option[Transaction] = {
+  def findById(id: UUID): Option[Transaction] = {
     DB.withConnection { implicit c =>
       SQL("SELECT * FROM transactions WHERE id = {id}").on(
         'id -> id
@@ -77,8 +77,12 @@ object Transaction {
   }
   def findByTokens(code: String, secret: String): Option[Transaction] = None
   def complete() {}
-  def create(transaction: Transaction): Transaction = {
-    DB.withTransaction { implicit connection => 
+  def create(
+    amount: Int,
+    receiver: Receiver,
+    sender: Sender
+    ): Option[Transaction] = {
+    DB.withConnection { implicit connection => 
       val res = SQL("""
         INSERT INTO TRANSACTIONS (
           amount,
@@ -104,26 +108,18 @@ object Transaction {
           {sender_country}
         )"""
       ).on(
-        'amount               -> transaction.amount,
-        'receiver_name        -> transaction.receiver.name,
-        'receiver_phonenumber -> transaction.receiver.phonenumber,
-        'receiver_country     -> transaction.receiver.country,
-        'sender_name          -> transaction.sender.name,
-        'sender_address       -> transaction.sender.address,
-        'sender_phonenumber   -> transaction.sender.phonenumber,
-        'sender_email         -> transaction.sender.email,
-        'sender_city          -> transaction.sender.city,
-        'sender_country       -> transaction.sender.country
+        'amount               -> amount,
+        'receiver_name        -> receiver.name,
+        'receiver_phonenumber -> receiver.phonenumber,
+        'receiver_country     -> receiver.country,
+        'sender_name          -> sender.name,
+        'sender_address       -> sender.address,
+        'sender_phonenumber   -> sender.phonenumber,
+        'sender_email         -> sender.email,
+        'sender_city          -> sender.city,
+        'sender_country       -> sender.country
       ).executeInsert[List[Transaction]](Transaction.simple *)
-      println("Some information " + res)
-      transaction
+      Transaction.findById(res.filter(_.id.isDefined).head.id.get)
     }
   }
 }
-
-// find helper
-// find by transaction code and token
-// find by id
-// fields 
-// save helper
-// destroy helper

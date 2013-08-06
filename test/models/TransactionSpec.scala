@@ -70,7 +70,7 @@ class TransactionSpec extends Specification {
     }
     "be instantiable" in {
       val transaction = Transaction (
-        UUID.randomUUID,
+        Some(UUID.randomUUID),
         2000,
         Receiver("Elvis Presley", "1238293842", "US"),
         Sender("Frank Sinatra", "283877821219", "US", "New York", "1st St 123", None, "ratpack@example.com")
@@ -81,7 +81,15 @@ class TransactionSpec extends Specification {
     }
     "be creatable with helper" in {
       running(FakeApplication()) {
-        //Transaction.create()
+        val t = Transaction.create(
+          400,
+          Receiver("Elvis Presley", "1238293842", "US"),
+          Sender("Frank Sinatra", "283877821219", "US", "New York", "1st St 123", None, "ratpack@example.com")
+        )
+        println("here goes " + t)
+        t.isDefined === true
+        t.get.amount === BigDecimal.int2bigDecimal(400)
+        t.get.receiver.country === "US"
       }
     }
   }
