@@ -9,6 +9,7 @@ import anorm._
 import anorm.SqlParser._
 
 import java.util.UUID
+import scala.util.Try
 
 class TransactionSpec extends Specification {
   "Transaction model" should {
@@ -24,9 +25,9 @@ class TransactionSpec extends Specification {
         }
         val parser = { get[UUID]("id") }
         DB.withConnection { implicit connection =>
-          val new_ids:List[UUID] = SQL("""
-            INSERT INTO TRANSACTIONS
-              (
+          def insert(amount:Int, receiver:String, sender:String):List[UUID] = {
+            SQL("""
+              INSERT INTO TRANSACTIONS (
                 amount,
                 receiver_name,
                 receiver_phonenumber,
@@ -48,15 +49,32 @@ class TransactionSpec extends Specification {
                 'sender@example.com',
                 'Teststad',
                 'NL'
-              )
-          """).on(
-            "amount"   -> 420,
-            "receiver" -> "Eline Weson",
-            "sender"   -> "Orgeon Waterberg").executeInsert(parser *)
-          println("The uuid for the new record is " + new_ids)
+              )"""
+            ).on(
+              "amount" -> amount, 
+              "receiver" -> receiver, 
+              "sender" -> sender
+            ).executeInsert(parser *)
+          }
+
+          val new_ids = insert(420, "Eline Weson", "Orgeon Waterberg")
+          val new_id = new_ids.head
+          //println("The uuid for the new record is " + new_ids.head)
+          Transaction.findById(new_id).isDefined === true
+          Transaction.findById(new_id).foreach(transaction => 
+            transaction.amount === 420
+          )
         }
         //val Some(transaction) = Computer.findById(new_id)
       }
+    }
+  }
+}
+
+trait table extends After {
+  def after = {
+    DB.withConnection { implicit connection =>
+      SQL("DELETE FROM transactions")
     }
   }
 }
