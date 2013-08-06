@@ -12,7 +12,7 @@ import java.util.UUID
 import scala.util.Try
 
 class TransactionSpec extends Specification {
-  "Transaction model" should {
+  "Transaction" should {
     "be retrieved by id" in {
       running(FakeApplication()) {
         implicit def rowToUUID: Column[UUID] = {
@@ -66,6 +66,22 @@ class TransactionSpec extends Specification {
           )
         }
         //val Some(transaction) = Computer.findById(new_id)
+      }
+    }
+    "be instantiable" in {
+      val transaction = Transaction (
+        UUID.randomUUID,
+        2000,
+        Receiver("Elvis Presley", "1238293842", "US"),
+        Sender("Frank Sinatra", "283877821219", "US", "New York", "1st St 123", None, "ratpack@example.com")
+      )
+      transaction.receiver.name === "Elvis Presley"
+      transaction.sender.name === "Frank Sinatra"
+      transaction.amount === BigDecimal.int2bigDecimal(2000)
+    }
+    "be creatable with helper" in {
+      running(FakeApplication()) {
+        //Transaction.create()
       }
     }
   }

@@ -77,7 +77,48 @@ object Transaction {
   }
   def findByTokens(code: String, secret: String): Option[Transaction] = None
   def complete() {}
-  //def save(): Transaction = {}
+  def create(transaction: Transaction): Transaction = {
+    DB.withTransaction { implicit connection => 
+      val res = SQL("""
+        INSERT INTO TRANSACTIONS (
+          amount,
+          receiver_name,
+          receiver_phonenumber,
+          receiver_country,
+          sender_name,
+          sender_address,
+          sender_phonenumber,
+          sender_email,
+          sender_city,
+          sender_country
+        ) values (
+          {amount},
+          {receiver_name},
+          {receiver_phonenumber},
+          {receiver_country},
+          {sender_name},
+          {sender_address},
+          {sender_phonenumber},
+          {sender_email},
+          {sender_city},
+          {sender_country}
+        )"""
+      ).on(
+        'amount               -> transaction.amount,
+        'receiver_name        -> transaction.receiver.name,
+        'receiver_phonenumber -> transaction.receiver.phonenumber,
+        'receiver_country     -> transaction.receiver.country,
+        'sender_name          -> transaction.sender.name,
+        'sender_address       -> transaction.sender.address,
+        'sender_phonenumber   -> transaction.sender.phonenumber,
+        'sender_email         -> transaction.sender.email,
+        'sender_city          -> transaction.sender.city,
+        'sender_country       -> transaction.sender.country
+      ).executeInsert[List[Transaction]](Transaction.simple *)
+      println("Some information " + res)
+      transaction
+    }
+  }
 }
 
 // find helper
