@@ -3,7 +3,15 @@ import anorm.SqlParser._
 import play.api.db.DB
 import play.api.Play.current
 import java.util.UUID
+import java.util.Date
+import java.sql.Timestamp
 import scala.math.BigDecimal
+
+abstract class Event
+
+case class Deposit(date: Date) extends Event
+
+case class Withdrawal(date: Date) extends Event
 
 case class Receiver(
   name: String,
@@ -25,7 +33,11 @@ case class Transaction(
   id: Option[UUID],
   amount: BigDecimal,
   receiver: Receiver,
-  sender: Sender
+  sender: Sender,
+  deposit: Deposit,
+  withdrawal: Option[Withdrawal],
+  tokenHash: String,
+  transactionCode: String
 )
 
 object Transaction {
@@ -37,9 +49,19 @@ object Transaction {
       }
     }
   }
+
+  implicit def rowToDate: Column[Date] = {
+    Column.nonNull[Date] { (value, meta) => 
+      value match {
+        case string: String => Right(new Date(Timestamp.valueOf(string).getTime))
+        case stamp: Timestamp => Right(new Date(stamp.getTime()))
+        case _ => Right(new Date(0L))
+      }
+    }
+  }
+
   implicit def rowToBigDecimal: Column[BigDecimal] = {
     Column.nonNull[BigDecimal] { (value, meta) => 
-      println("Whow she is a " + value.getClass)
       value match {
         case value:Double => Right(BigDecimal.double2bigDecimal(value))
         case value:Long   => Right(BigDecimal.long2bigDecimal(value))
@@ -60,14 +82,30 @@ object Transaction {
     get[String]("transactions.sender_phonenumber")~
     get[String]("transactions.sender_email")~
     get[String]("transactions.sender_city")~
-    get[String]("transactions.sender_country") map {
-      case id~v~rn~rp~rc~sn~sa~sp~se~sc~sl => Transaction(Some(id), v,
+    get[String]("transactions.sender_country")~
+    get[Date]("transactions.deposited_at")~
+    get[Option[Date]]("transactions.withdrawn_at")~
+    get[String]("transactions.token")~
+    get[String]("transactions.code") map {
+      case id~v~rn~rp~rc~sn~sa~sp~se~sc~sl~td~tw~t~c => 
+      println("For " + id + " before=" + td + " and after=" + tw)
+      Transaction(Some(id), v,
         Receiver(rn, rp, rc),
-        Sender(sn, sp, sl, sc, sa, None, se)
+        Sender(sn, sp, sl, sc, sa, None, se),
+        Deposit(td), //td
+        if (tw.isDefined) Some(Withdrawal(tw.get)) else None,
+        t,
+        c
       )
     }
   }
-  def all(): List[Transaction] = List[Transaction]()
+
+  def findAll(): Seq[Transaction] = {
+    DB.withConnection { implicit c =>
+      SQL("SELECT * FROM transactions").as(Transaction.simple *)
+    }
+  }
+
   def findById(id: UUID): Option[Transaction] = {
     DB.withConnection { implicit c =>
       SQL("SELECT * FROM transactions WHERE id = {id}").on(
@@ -76,11 +114,20 @@ object Transaction {
     }
   }
   def findByTokens(code: String, secret: String): Option[Transaction] = None
-  def complete() {}
+  def withdraw(id: UUID):Transaction = {
+    DB.withConnection { implicit c => 
+      val res = SQL("""
+        UPDATE transactions
+        SET withdrawn_at = CURRENT_TIMESTAMP
+        WHERE id = {id}""").on('id -> id).executeUpdate()
+      Transaction.findById(id).get
+    }
+  }
   def create(
     amount: Int,
     receiver: Receiver,
-    sender: Sender
+    sender: Sender,
+    secret: String
     ): Option[Transaction] = {
     DB.withConnection { implicit connection => 
       val res = SQL("""
@@ -94,7 +141,9 @@ object Transaction {
           sender_phonenumber,
           sender_email,
           sender_city,
-          sender_country
+          sender_country,
+          token,
+          code
         ) values (
           {amount},
           {receiver_name},
@@ -105,7 +154,9 @@ object Transaction {
           {sender_phonenumber},
           {sender_email},
           {sender_city},
-          {sender_country}
+          {sender_country},
+          {token},
+          {code}
         )"""
       ).on(
         'amount               -> amount,
@@ -117,7 +168,9 @@ object Transaction {
         'sender_phonenumber   -> sender.phonenumber,
         'sender_email         -> sender.email,
         'sender_city          -> sender.city,
-        'sender_country       -> sender.country
+        'sender_country       -> sender.country,
+        'token                -> secret,
+        'code                 -> secret
       ).executeInsert[List[Transaction]](Transaction.simple *)
       Transaction.findById(res.filter(_.id.isDefined).head.id.get)
     }

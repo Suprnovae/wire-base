@@ -8,7 +8,7 @@ import play.api.test.Helpers._
 import anorm._
 import anorm.SqlParser._
 
-import java.util.UUID
+import java.util.{UUID, Date}
 import scala.util.Try
 
 class TransactionSpec extends Specification {
@@ -37,7 +37,9 @@ class TransactionSpec extends Specification {
                 sender_phonenumber,
                 sender_email,
                 sender_city,
-                sender_country
+                sender_country,
+                token,
+                code 
               ) values (
                 {amount},
                 {receiver},
@@ -48,7 +50,9 @@ class TransactionSpec extends Specification {
                 '+31765437890984',
                 'sender@example.com',
                 'Teststad',
-                'NL'
+                'NL',
+                'Awwwh',
+                'Snap!'
               )"""
             ).on(
               "amount" -> amount, 
@@ -59,7 +63,6 @@ class TransactionSpec extends Specification {
 
           val new_ids = insert(420, "Eline Weson", "Orgeon Waterberg")
           val new_id = new_ids.head
-          //println("The uuid for the new record is " + new_ids.head)
           Transaction.findById(new_id).isDefined === true
           Transaction.findById(new_id).foreach(transaction => 
             transaction.amount === 420
@@ -73,7 +76,11 @@ class TransactionSpec extends Specification {
         Some(UUID.randomUUID),
         2000,
         Receiver("Elvis Presley", "1238293842", "US"),
-        Sender("Frank Sinatra", "283877821219", "US", "New York", "1st St 123", None, "ratpack@example.com")
+        Sender("Frank Sinatra", "283877821219", "US", "New York", "1st St 123", None, "ratpack@example.com"),
+        Deposit(new Date(1230L)),
+        None,
+        "secrets kill",
+        "obama"
       )
       transaction.receiver.name === "Elvis Presley"
       transaction.sender.name === "Frank Sinatra"
@@ -84,12 +91,30 @@ class TransactionSpec extends Specification {
         val t = Transaction.create(
           400,
           Receiver("Elvis Presley", "1238293842", "US"),
-          Sender("Frank Sinatra", "283877821219", "US", "New York", "1st St 123", None, "ratpack@example.com")
+          Sender("Frank Sinatra", "283877821219", "US", "New York", "1st St 123", None, "ratpack@example.com"),
+          "secrets kill"
         )
-        println("here goes " + t)
         t.isDefined === true
         t.get.amount === BigDecimal.int2bigDecimal(400)
         t.get.receiver.country === "US"
+      }
+    }
+    "should be withdrawable" in {
+      running(FakeApplication()) {
+        val t = Transaction.create(
+          400,
+          Receiver("Christopher Wallace", "1238293842", "US"),
+          Sender("Ella Fitzgerald", "2838384848", "US", "Atlanta", "Bourgeoisie Lane", None, "ella@example.com"),
+          "boondocks"
+        )
+        t.isDefined === true
+        val id = t.get.id
+        //Transaction.withdraw(t.get.id).withdrawn_at.getClass.isInstanceOf[String] === true
+        Transaction.findById(id.get).get.withdrawal.isDefined === false
+        val wt = Transaction.withdraw(id.get)
+        wt.withdrawal.isDefined === true
+        println("The before is " + wt.deposit.date + " and the after is " + wt.withdrawal.get.date)
+        wt.withdrawal.get.date.after(wt.deposit.date) === true
       }
     }
   }
