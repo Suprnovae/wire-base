@@ -32,7 +32,7 @@ case class Sender(
 )
 
 case class Transaction(
-  id: Option[UUID],
+  id: UUID,
   amount: BigDecimal,
   receiver: Receiver,
   sender: Sender,
@@ -90,8 +90,7 @@ object Transaction {
     get[String]("transactions.token")~
     get[String]("transactions.code") map {
       case id~v~rn~rp~rc~sn~sa~sp~se~sc~sl~td~tw~t~c => 
-      println("For " + id + " before=" + td + " and after=" + tw)
-      Transaction(Some(id), v,
+      Transaction(id, v,
         Receiver(rn, rp, rc),
         Sender(sn, sp, sl, sc, sa, None, se),
         Deposit(td), //td
@@ -116,6 +115,10 @@ object Transaction {
     }
   }
   def findByTokens(code: String, secret: String): Option[Transaction] = None
+  def validate(id: UUID, code: String, secret: String): Option[Boolean] = {
+    Some(false)
+  }
+  // TODO: make this a Try(Transaction)
   def withdraw(id: UUID):Transaction = {
     DB.withConnection { implicit c => 
       val res = SQL("""
@@ -175,7 +178,7 @@ object Transaction {
         'token                -> (receiver.name+secret+randomCode).bcrypt,
         'code                 -> randomCode
       ).executeInsert[List[Transaction]](Transaction.simple *)
-      Transaction.findById(res.filter(_.id.isDefined).head.id.get)
+      Transaction.findById(res.head.id)
     }
   }
 }

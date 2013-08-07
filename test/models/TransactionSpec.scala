@@ -73,7 +73,7 @@ class TransactionSpec extends Specification {
     }
     "be instantiable" in {
       val transaction = Transaction (
-        Some(UUID.randomUUID),
+        UUID.randomUUID,
         2000,
         Receiver("Elvis Presley", "1238293842", "US"),
         Sender("Frank Sinatra", "283877821219", "US", "New York", "1st St 123", None, "ratpack@example.com"),
@@ -111,10 +111,9 @@ import java.sql.Timestamp
         t.isDefined === true
         val id = t.get.id
         //Transaction.withdraw(t.get.id).withdrawn_at.getClass.isInstanceOf[String] === true
-        Transaction.findById(id.get).get.withdrawal.isDefined === false
-        val wt = Transaction.withdraw(id.get)
+        Transaction.findById(id).get.withdrawal.isDefined === false
+        val wt = Transaction.withdraw(id)
         wt.withdrawal.isDefined === true
-        println("The before is " + wt.deposit.date + " and the after is " + wt.withdrawal.get.date)
         wt.withdrawal.get.date.after(wt.deposit.date) === true
       }
     }
@@ -122,13 +121,26 @@ import java.sql.Timestamp
       running(FakeApplication()) {
         val t = Transaction.create(
           620,
-          Receiver("Mama Odi", "516789203", "JA"),
+          Receiver("Mama Odi", "516789203", "JM"),
           Sender("Princess without Frog", "122798312", "US", "New Orleans", "Fracoise Ave 23", None, "louissianaprincess@example.com"),
           "dance baby"
         )
         t.isDefined === true
-        println("code is " + t.get.transactionCode)
         t.get.transactionCode.length === 8
+      }
+    }
+    "should validate valid codes with secrets" in {
+      running(FakeApplication()) {
+        val secret = "la droga es mio"
+        val t = Transaction.create(
+          620,
+          Receiver("Fidel Castro", "18786341", "CU"),
+          Sender("Pablo Escobar", "15268390012", "CO", "Medellín", "Carrera 666A", None, "broke.pablo@example.com"),
+          secret 
+        )
+        t.isDefined === true
+        Transaction.validate(t.get.id, t.get.transactionCode, secret) === true
+        Transaction.validate(t.get.id, t.get.transactionCode, "no") === false
       }
     }
   }
