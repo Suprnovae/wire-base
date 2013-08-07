@@ -172,7 +172,7 @@ object Transaction {
         'sender_city          -> sender.city,
         'sender_country       -> sender.country,
         'token                -> (receiver.name+secret+sender.email).bcrypt,
-        'code                 -> Random.alphanumeric.take(8).mkString
+        'code                 -> Stream.continually(Random.nextInt(10)).take(8).mkString
       ).executeInsert[List[Transaction]](Transaction.simple *)
       Transaction.findById(res.filter(_.id.isDefined).head.id.get)
     }
