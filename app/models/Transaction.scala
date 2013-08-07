@@ -132,6 +132,7 @@ object Transaction {
     secret: String
     ): Option[Transaction] = {
     DB.withConnection { implicit connection => 
+      val randomCode = Stream.continually(Random.nextInt(10)).take(8).mkString
       val res = SQL("""
         INSERT INTO TRANSACTIONS (
           amount,
@@ -171,8 +172,8 @@ object Transaction {
         'sender_email         -> sender.email,
         'sender_city          -> sender.city,
         'sender_country       -> sender.country,
-        'token                -> (receiver.name+secret+sender.email).bcrypt,
-        'code                 -> Stream.continually(Random.nextInt(10)).take(8).mkString
+        'token                -> (receiver.name+secret+randomCode).bcrypt,
+        'code                 -> randomCode
       ).executeInsert[List[Transaction]](Transaction.simple *)
       Transaction.findById(res.filter(_.id.isDefined).head.id.get)
     }
