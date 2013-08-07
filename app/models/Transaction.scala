@@ -1,11 +1,13 @@
 import anorm._
 import anorm.SqlParser._
+import com.github.t3hnar.bcrypt._
+import java.sql.Timestamp
+import java.util.Date
+import java.util.UUID
 import play.api.db.DB
 import play.api.Play.current
-import java.util.UUID
-import java.util.Date
-import java.sql.Timestamp
 import scala.math.BigDecimal
+import scala.util.Random
 
 abstract class Event
 
@@ -169,8 +171,8 @@ object Transaction {
         'sender_email         -> sender.email,
         'sender_city          -> sender.city,
         'sender_country       -> sender.country,
-        'token                -> secret,
-        'code                 -> secret
+        'token                -> (receiver.name+secret+sender.email).bcrypt,
+        'code                 -> Random.alphanumeric.take(8).mkString
       ).executeInsert[List[Transaction]](Transaction.simple *)
       Transaction.findById(res.filter(_.id.isDefined).head.id.get)
     }

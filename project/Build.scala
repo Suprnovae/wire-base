@@ -11,7 +11,8 @@ object ApplicationBuild extends Build {
     // Add your project dependencies here,
     jdbc,
     anorm,
-    "org.postgresql" % "postgresql" % "9.2-1003-jdbc4"
+    "org.postgresql" % "postgresql" % "9.2-1003-jdbc4",
+    "com.github.t3hnar" % "scala-bcrypt_2.10" % "2.2"
     //"org.spec2" %% "specs2" % "2.1.1" % "test"
   )
 

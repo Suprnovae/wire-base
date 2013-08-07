@@ -88,6 +88,7 @@ class TransactionSpec extends Specification {
     }
     "be creatable with helper" in {
       running(FakeApplication()) {
+import java.sql.Timestamp
         val t = Transaction.create(
           400,
           Receiver("Elvis Presley", "1238293842", "US"),
@@ -117,13 +118,24 @@ class TransactionSpec extends Specification {
         wt.withdrawal.get.date.after(wt.deposit.date) === true
       }
     }
+    "should generate transaction codes for entries" in {
+      running(FakeApplication()) {
+        val t = Transaction.create(
+          620,
+          Receiver("Mama Odi", "516789203", "JA"),
+          Sender("Princess without Frog", "122798312", "US", "New Orleans", "Fracoise Ave 23", None, "louissianaprincess@example.com"),
+          "dance baby"
+        )
+        t.isDefined === true
+        println("code is " + t.get.transactionCode)
+        t.get.transactionCode.length === 8
+      }
+    }
   }
 }
 
 trait table extends After {
-  def after = {
-    DB.withConnection { implicit connection =>
-      SQL("DELETE FROM transactions")
-    }
+  def after = DB.withConnection { implicit connection =>
+    SQL("DELETE FROM transactions")
   }
 }
