@@ -115,8 +115,11 @@ object Transaction {
     }
   }
   def findByTokens(code: String, secret: String): Option[Transaction] = None
-  def validate(id: UUID, code: String, secret: String): Option[Boolean] = {
-    Some(false)
+  def validate(id: UUID, code: String, secret: String): Boolean = {
+    Transaction.findById(id) match {
+      case Some(t) => if ((t.receiver.name+secret+t.transactionCode).isBcrypted(t.tokenHash)) true else false
+      case None    => false
+    }
   }
   // TODO: make this a Try(Transaction)
   def withdraw(id: UUID):Transaction = {
