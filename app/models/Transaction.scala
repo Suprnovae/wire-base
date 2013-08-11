@@ -115,22 +115,30 @@ object Transaction {
     }
   }
   def findByTokens(code: String, secret: String): Option[Transaction] = None
+  def countByCode(code: String): Long = {
+    DB.withConnection { implicit c =>
+      SQL("""SELECT COUNT(*) AS c FROM transactions WHERE code = {code}""")
+        .on('code -> code).apply().head[Long]("c")
+    }
+  }
   def validate(id: UUID, code: String, secret: String): Boolean = {
     Transaction.findById(id) match {
       case Some(t) => if ((t.receiver.name+secret+t.transactionCode).isBcrypted(t.tokenHash)) true else false
       case None    => false
     }
   }
-  // TODO: make this a Try(Transaction)
-  def withdraw(id: UUID):Transaction = {
+  def withdraw(id: UUID): Transaction = {
     DB.withConnection { implicit c => 
-      val res = SQL("""
+      val count = SQL("""
         UPDATE transactions
         SET withdrawn_at = CURRENT_TIMESTAMP
-        WHERE id = {id}""").on('id -> id).executeUpdate()
-      Transaction.findById(id).get
+        WHERE id = {id} AND withdrawn_at IS NULL""").on('id -> id).executeUpdate()
+      val bogey = Transaction.findById(id)
+      if((count==0) && (bogey != None)) throw new AlreadyWithdrawnException()
+      bogey.get
     }
   }
+  // TODO: make this a Try(Transaction)
   def create(
     amount: Int,
     receiver: Receiver,
@@ -185,3 +193,5 @@ object Transaction {
     }
   }
 }
+
+class AlreadyWithdrawnException extends Exception

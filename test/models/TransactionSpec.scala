@@ -10,20 +10,21 @@ import anorm.SqlParser._
 
 import java.util.{UUID, Date}
 import scala.util.Try
+import scala.util.Random
 
 class TransactionSpec extends Specification {
+  implicit def rowToUUID: Column[UUID] = {
+    Column.nonNull[UUID] { (value, meta) =>
+      value match {
+        case uuid: UUID     => Right(uuid)
+        case string: String => Right(UUID.fromString(string))
+      }
+    }
+  }
+  val parser = { get[UUID]("id") }
   "Transaction" should {
     "be retrieved by id" in {
       running(FakeApplication()) {
-        implicit def rowToUUID: Column[UUID] = {
-          Column.nonNull[UUID] { (value, meta) =>
-            value match {
-              case uuid: UUID     => Right(uuid)
-              case string: String => Right(UUID.fromString(string))
-            }
-          }
-        }
-        val parser = { get[UUID]("id") }
         DB.withConnection { implicit connection =>
           def insert(amount:Int, receiver:String, sender:String):List[UUID] = {
             SQL("""
@@ -71,6 +72,11 @@ class TransactionSpec extends Specification {
         //val Some(transaction) = Computer.findById(new_id)
       }
     }
+    "be None upon fetching with a non-existent UUID" in {
+      running(FakeApplication()) {
+        Transaction.findById(new UUID(0, 0)) === None
+      }
+    }
     "be instantiable" in {
       val transaction = Transaction (
         UUID.randomUUID,
@@ -100,7 +106,7 @@ import java.sql.Timestamp
         t.get.receiver.country === "US"
       }
     }
-    "should be withdrawable" in {
+    "be withdrawable" in {
       running(FakeApplication()) {
         val t = Transaction.create(
           400,
@@ -110,14 +116,41 @@ import java.sql.Timestamp
         )
         t.isDefined === true
         val id = t.get.id
-        //Transaction.withdraw(t.get.id).withdrawn_at.getClass.isInstanceOf[String] === true
         Transaction.findById(id).get.withdrawal.isDefined === false
         val wt = Transaction.withdraw(id)
         wt.withdrawal.isDefined === true
         wt.withdrawal.get.date.after(wt.deposit.date) === true
       }
     }
-    "should generate transaction codes for entries" in {
+    "fail withdraw with invalid UUID" in {
+      running(FakeApplication()) {
+        Transaction.withdraw(new UUID(0, 0)) must throwA[NoSuchElementException]
+        Try(Transaction.withdraw(new UUID(0, 0))).isSuccess === false
+      }
+    }
+    "fail withdraw on already withdrawn transaction" in {
+      running(FakeApplication()) {
+        val t = Transaction.create(
+          2290,
+          Receiver("Huey Freeman", "10921923", "US"),
+          Sender("Riley Freeman", "1290192031", "US", "Atlanta", "Bourgeoisie Lane", None, "ella@example.com"),
+          "boondocks"
+        )
+        t.isDefined === true
+        val wd = Transaction.withdraw(t.get.id).withdrawal.get.date
+        Transaction.withdraw(t.get.id) must throwA[AlreadyWithdrawnException]
+        Transaction.findById(t.get.id).get.withdrawal.get.date === wd
+      }
+    }
+    "returns empty list when there are no transaction entries" in {
+      running(FakeApplication()) {
+        DB.withConnection { implicit connection =>
+          SQL("DELETE FROM transactions").executeUpdate()
+        }
+        Transaction.findAll.isEmpty === true
+      }
+    }
+    "generate transaction codes for entries" in {
       running(FakeApplication()) {
         val t = Transaction.create(
           620,
@@ -129,7 +162,7 @@ import java.sql.Timestamp
         t.get.transactionCode.length === 8
       }
     }
-    "should validate valid codes with secrets" in {
+    "validate codes with secrets" in {
       running(FakeApplication()) {
         val secret = "la droga es mio"
         val t = Transaction.create(
@@ -143,11 +176,51 @@ import java.sql.Timestamp
         Transaction.validate(t.get.id, t.get.transactionCode, "no") === false
       }
     }
-  }
-}
+    "finds all transactions with given tokens" in { pending }
+    "find all non-completed transactions by transaction code" in { pending }
+    "counts the non-completed transactions by transaction code" in {
+      running(FakeApplication()) {
+        DB.withConnection { implicit connection =>
+          def insertTransactionWithCode(code:String):List[UUID] = {
+            SQL("""
+              INSERT INTO TRANSACTIONS (
+                amount,
+                receiver_name,
+                receiver_phonenumber,
+                receiver_country,
+                sender_name,
+                sender_address,
+                sender_phonenumber,
+                sender_email,
+                sender_city,
+                sender_country,
+                token,
+                code 
+              ) values (
+                2000,
+                'Kwame Foo',
+                '+5978765432123456',
+                'SR',
+                'Mama Odi',
+                'Karel Doormanstraat 41091',
+                '+31765437890984',
+                'sender@example.com',
+                'Teststad',
+                'NL',
+                'blablah',
+                {code}
+              )"""
+            ).on(
+              'code -> code
+            ).executeInsert(parser *)
+          }
 
-trait table extends After {
-  def after = DB.withConnection { implicit connection =>
-    SQL("DELETE FROM transactions")
+          val code = Stream.continually(Random.nextInt(10)).take(8).mkString
+          val count = Random.nextInt(20)
+          1 to count foreach(_ => insertTransactionWithCode(code))
+          Transaction.countByCode(code) === count
+        }
+      }
+    }
   }
 }
