@@ -43,37 +43,7 @@ case class Transaction(
   transactionCode: String
 )
 
-object Transaction {
-  implicit def rowToUUID: Column[UUID] = {
-    Column.nonNull[UUID] { (value, meta) =>
-      value match {
-        case uuid: UUID     => Right(uuid)
-        case string: String => Right(UUID.fromString(string))
-      }
-    }
-  }
-
-  implicit def rowToDate: Column[Date] = {
-    Column.nonNull[Date] { (value, meta) => 
-      value match {
-        case string: String => Right(new Date(Timestamp.valueOf(string).getTime))
-        case stamp: Timestamp => Right(new Date(stamp.getTime()))
-        case _ => Right(new Date(0L))
-      }
-    }
-  }
-
-  implicit def rowToBigDecimal: Column[BigDecimal] = {
-    Column.nonNull[BigDecimal] { (value, meta) => 
-      value match {
-        case value:Double => Right(BigDecimal.double2bigDecimal(value))
-        case value:Long   => Right(BigDecimal.long2bigDecimal(value))
-        case value:java.math.BigDecimal => Right(new BigDecimal(value))
-        case _            => Right(BigDecimal.int2bigDecimal(0))
-      }
-    }
-  }
-
+object Transaction extends Model {
   val simple = {
     get[UUID]("transactions.id")~
     get[BigDecimal]("transactions.amount")~

@@ -26,40 +26,7 @@ case class CashPoint(
   note: Option[String]
 )
 
-object CashPoint {
-  implicit def rowToUUID: Column[UUID] = {
-    Column.nonNull[UUID] { (value, meta) =>
-      value match {
-        case uuid: UUID     => Right(uuid)
-        case string: String => Right(UUID.fromString(string))
-      }
-    }
-  }
-
-  implicit def rowToDate: Column[Date] = {
-    Column.nonNull[Date] { (value, meta) => 
-      value match {
-        case string: String => Right(new Date(Timestamp.valueOf(string).getTime))
-        case stamp: Timestamp => Right(new Date(stamp.getTime()))
-        case _ => Right(new Date(0L))
-      }
-    }
-  }
-
-  implicit def rowToPoint: Column[Point] = {
-    Column.nonNull[Point] { (value, meta) =>
-      value match {
-        case point: PGpoint => {
-          val p = new Point
-          p.setLocation(point.x, point.y)
-          Right(p)
-        }
-        case point: Point   => Right(new Point(point))
-        case _              => Right(new Point(0, 0))
-      }
-    }
-  }
-
+object CashPoint extends Model {
   val simple = {
     get[UUID]("cash_points.id")~
     get[Point]("cash_points.location")~
