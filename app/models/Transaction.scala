@@ -107,6 +107,13 @@ object Transaction {
     }
   }
 
+  def findByCode(code: String): Seq[Transaction] = {
+    DB.withConnection { implicit c =>
+      SQL("SELECT * FROM transactions WHERE code = {code}")
+      .on('code -> code).as(Transaction.simple *)
+    }
+  }
+
   def findById(id: UUID): Option[Transaction] = {
     DB.withConnection { implicit c =>
       SQL("SELECT * FROM transactions WHERE id = {id}").on(
@@ -146,7 +153,11 @@ object Transaction {
     secret: String
     ): Option[Transaction] = {
     DB.withConnection { implicit connection => 
-      val randomCode = Stream.continually(Random.nextInt(10)).take(8).mkString
+      var randomCode: String = ""
+      do {
+        randomCode = Stream.continually(Random.nextInt(10)).take(8).mkString
+      } while(Transaction.countByCode(randomCode) > 0)
+
       val res = SQL("""
         INSERT INTO TRANSACTIONS (
           amount,

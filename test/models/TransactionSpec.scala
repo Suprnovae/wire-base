@@ -13,6 +13,13 @@ import scala.util.Try
 import scala.util.Random
 
 class TransactionSpec extends Specification {
+  step {
+    running(FakeApplication()) {
+      DB.withConnection { implicit c =>
+        SQL("""DELETE FROM transactions""").executeUpdate()
+      }
+    }
+  }
   implicit def rowToUUID: Column[UUID] = {
     Column.nonNull[UUID] { (value, meta) =>
       value match {
@@ -69,10 +76,9 @@ class TransactionSpec extends Specification {
             transaction.amount === 420
           )
         }
-        //val Some(transaction) = Computer.findById(new_id)
       }
     }
-    "be None upon fetching with a non-existent UUID" in {
+    "be None upon fetching a non-existent UUID" in {
       running(FakeApplication()) {
         Transaction.findById(new UUID(0, 0)) === None
       }
@@ -142,11 +148,8 @@ import java.sql.Timestamp
         Transaction.findById(t.get.id).get.withdrawal.get.date === wd
       }
     }
-    "returns empty list when there are no transaction entries" in {
+    "returns empty list when there are no transaction entries" in empty_set {
       running(FakeApplication()) {
-        DB.withConnection { implicit connection =>
-          SQL("DELETE FROM transactions").executeUpdate()
-        }
         Transaction.findAll.isEmpty === true
       }
     }
@@ -176,9 +179,52 @@ import java.sql.Timestamp
         Transaction.validate(t.get.id, t.get.transactionCode, "no") === false
       }
     }
-    "finds all transactions with given tokens" in { pending }
-    "find all non-completed transactions by transaction code" in { pending }
-    "counts the non-completed transactions by transaction code" in {
+    "finds all transactions by given tokens" in { pending }
+    "finds all non-completed transactions by code" in { 
+      running(FakeApplication()) {
+        DB.withConnection { implicit connection =>
+          def insertTransactionWithCode(code:String):List[UUID] = {
+            SQL("""
+              INSERT INTO TRANSACTIONS (
+                amount,
+                receiver_name,
+                receiver_phonenumber,
+                receiver_country,
+                sender_name,
+                sender_address,
+                sender_phonenumber,
+                sender_email,
+                sender_city,
+                sender_country,
+                token,
+                code 
+              ) values (
+                2000,
+                'Kwame Foo',
+                '+5978765432123456',
+                'SR',
+                'Mama Odi',
+                'Karel Doormanstraat 41091',
+                '+31765437890984',
+                'sender@example.com',
+                'Teststad',
+                'NL',
+                'blablah',
+                {code}
+              )"""
+            ).on(
+              'code -> code
+            ).executeInsert(parser *)
+          }
+          val code = Stream.continually(Random.nextInt(10)).take(8).mkString
+          val count = Random.nextInt(20)
+          1 to count foreach(_ => insertTransactionWithCode(code))
+          Transaction.findByCode(code).isEmpty === false
+          Transaction.findByCode(code).length === count
+        }
+      }
+    }
+    "counts the non-completed transactions by code" in {
       running(FakeApplication()) {
         DB.withConnection { implicit connection =>
           def insertTransactionWithCode(code:String):List[UUID] = {
@@ -219,6 +265,17 @@ import java.sql.Timestamp
           val count = Random.nextInt(20)
           1 to count foreach(_ => insertTransactionWithCode(code))
           Transaction.countByCode(code) === count
+        }
+      }
+    }
+    "fails when adding transaction with empty transaction code" in { pending }
+  }
+
+  object empty_set extends Before {
+    def before {
+      running(FakeApplication()) {
+        DB.withConnection { implicit c =>
+          SQL("""DELETE FROM transactions""").executeUpdate()
         }
       }
     }
