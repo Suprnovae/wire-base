@@ -1,12 +1,16 @@
 package models
 
 import anorm._
-import anorm._
+import anorm.SqlParser._
+import java.awt.Point
 import java.sql.Timestamp
 import java.util.{ Date, UUID }
+import org.postgresql.geometric.PGpoint
+import play.api.db.DB
+import play.api.Play.current
 
 case class Location(
-  coordinates: String,
+  coordinates: Point,
   address: String,
   city: String,
   country: String
@@ -40,8 +44,49 @@ object CashPoint {
     }
   }
 
+  implicit def rowToPoint: Column[Point] = {
+    Column.nonNull[Point] { (value, meta) =>
+      value match {
+        case point: PGpoint => {
+          val p = new Point
+          p.setLocation(point.x, point.y)
+          Right(p)
+        }
+        case point: Point   => Right(new Point(point))
+        case _              => Right(new Point(0, 0))
+      }
+    }
+  }
+
+  val simple = {
+    get[UUID]("cash_points.id")~
+    get[Point]("cash_points.location")~
+    get[String]("cash_points.address")~
+    get[String]("cash_points.city")~
+    get[String]("cash_points.country")~
+    get[String]("cash_points.serial")~
+    get[String]("cash_points.token")~
+    get[Option[String]]("cash_points.note")~
+    get[Boolean]("cash_points.active")~
+    get[Date]("cash_points.created_at") map {
+      case id~loc~addr~city~country~serial~token~note~active~created_at =>
+      CashPoint(
+        id,
+        Location(loc, addr, city, country),
+        serial,
+        token,
+        active
+      )
+    }
+  }
+
   def findAll(): Seq[CashPoint] = List[CashPoint]()
-  def findById(id: UUID): Option[Transaction] = None
+  def findById(id: UUID): Option[CashPoint] = {
+    DB.withConnection { implicit c =>
+      SQL("SELECT * FROM cash_points WHERE id = {id}")
+      .on('id -> id).as(CashPoint.simple.singleOpt)
+    }
+  }
   //def findNear(
   //def validate(id: UUID, token: String, transaction: Transaction)
 }

@@ -32,7 +32,30 @@ class CashPointSpec extends Specification {
   }
   val parser = { get[UUID]("id") }
   "CashPoint" should {
-    "be retrieved by id" in { pending }
+    "be retrieved by id" in { 
+      running(FakeApplication()) {
+        DB.withConnection { implicit connection =>
+          def insert(street: String): List[UUID] = {
+            SQL("""INSERT INTO cash_points
+            (location, address, city, country, serial, token, note)
+            values (
+              POINT(23, 43),
+              {street},
+              'Metropolis',
+              'US',
+              '1231-28AA-BSI1-23SK-KS18-12JJ',
+              'jajajajajaj',
+              'nothing to say'
+            )""").on('street -> street).executeInsert(parser *)
+          }
+          val new_id = insert("Somestreet 123343").head
+          CashPoint.findById(new_id).isDefined === true
+          CashPoint.findById(new_id).foreach(cash_point =>
+            cash_point.location.city === "Metropolis"
+          )
+        }
+      }
+    }
     "be nothing upon fetching a non-existent UUID" in { pending }
     "be instantiable" in { pending }
     "be creatable with helper" in { pending }
