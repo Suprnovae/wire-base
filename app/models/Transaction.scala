@@ -4,8 +4,7 @@ import anorm._
 import anorm.SqlParser._
 import com.github.t3hnar.bcrypt._
 import java.sql.Timestamp
-import java.util.Date
-import java.util.UUID
+import java.util.{ Date, UUID }
 import play.api.db.DB
 import play.api.Play.current
 import scala.math.BigDecimal
