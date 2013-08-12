@@ -5,6 +5,8 @@ import org.specs2.mutable._
 
 import java.util.{ Date, UUID }
 
+import models._
+
 import play.api.db.DB
 import play.api.Play.current
 import play.api.test._
