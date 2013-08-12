@@ -21,7 +21,8 @@ case class CashPoint(
   location: Location,
   serial: String,
   tokenHash: String,
-  active: Boolean
+  active: Boolean,
+  note: Option[String]
 )
 
 object CashPoint {
@@ -75,11 +76,52 @@ object CashPoint {
         Location(loc, addr, city, country),
         serial,
         token,
-        active
+        active,
+        note
       )
     }
   }
 
+  def create(
+    serial: String, 
+    location: Location, 
+    note: Option[String]
+  ): Option[CashPoint] = {
+    DB.withConnection { implicit connection => 
+      val res = SQL("""
+        INSERT INTO cash_points (
+          location,
+          address,
+          city,
+          country,
+          serial,
+          token,
+          note,
+          active
+        ) values (
+          {coord},
+          {address},
+          {city},
+          {country},
+          {serial},
+          {token},
+          {note},
+          FALSE
+        )"""
+      ).on(
+        'coord                -> new PGpoint(
+          location.coordinates.x, 
+          location.coordinates.y),
+        'address              -> location.address,
+        'city                 -> location.city,
+        'country              -> location.country,
+        'serial               -> serial,
+        'token                -> "this is some shit",
+        'note                 -> note
+      ).executeInsert[List[CashPoint]](CashPoint.simple *)
+      CashPoint.findById(res.head.id)
+    }
+  }
   def findAll(): Seq[CashPoint] = List[CashPoint]()
   def findById(id: UUID): Option[CashPoint] = {
     DB.withConnection { implicit c =>

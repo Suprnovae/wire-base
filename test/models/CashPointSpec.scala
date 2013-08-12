@@ -3,6 +3,7 @@ import anorm.SqlParser._
 
 import org.specs2.mutable._
 
+import java.awt.Point
 import java.util.{ UUID }
 
 import models._
@@ -56,8 +57,36 @@ class CashPointSpec extends Specification {
         }
       }
     }
-    "be nothing upon fetching a non-existent UUID" in { pending }
-    "be instantiable" in { pending }
-    "be creatable with helper" in { pending }
+    "be nothing upon fetching a non-existent UUID" in { 
+      running(FakeApplication()) {
+        Transaction.findById(new UUID(0, 0)) === None
+      }
+    }
+    "be instantiable" in {
+      val iut = CashPoint (
+        UUID.randomUUID,
+        Location(new Point(23, 443), "Long Island Str 23", "Gotham", "US"),
+        "JJQI-293A-2JJ2-JIQ5-823N",
+        "blablablablah",
+        true,
+        None
+      )
+      iut.location.address === "Long Island Str 23"
+      iut.location.city    === "Gotham"
+      iut.location.country === "US"
+      iut.note             === None
+    }
+    "be creatable with helper" in { 
+      running(FakeApplication()) {
+        val p = CashPoint.create(
+          "UC_NYC_MANH_WALLSTR_0012",
+          Location(new Point(232, 433), "Wall Street 12", "NYC", "US"),
+          Some("The ATM near the NYSE at 11 Wall Street")
+        )
+        p.isDefined === true
+        p.get.serial === "UC_NYC_MANH_WALLSTR_0012"
+        p.get.location.country === "US"
+      }
+    }
   }
 }
