@@ -9,7 +9,7 @@ import java.util.{ Date, UUID }
 import org.postgresql.geometric.PGpoint
 import play.api.db.DB
 
-class Model {
+trait Extractable {
   implicit def rowToUUID: Column[UUID] = {
     Column.nonNull[UUID] { (value, meta) =>
       value match {
@@ -55,3 +55,7 @@ class Model {
     }
   }
 }
+
+// TODO: extract findBy methods to Findable
+
+class Model extends Extractable
