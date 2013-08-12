@@ -102,7 +102,6 @@ class TransactionSpec extends Specification {
     }
     "be creatable with helper" in {
       running(FakeApplication()) {
-import java.sql.Timestamp
         val t = Transaction.create(
           400,
           Receiver("Elvis Presley", "1238293842", "US"),
