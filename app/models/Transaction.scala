@@ -1,3 +1,5 @@
+package models
+
 import anorm._
 import anorm.SqlParser._
 import com.github.t3hnar.bcrypt._
