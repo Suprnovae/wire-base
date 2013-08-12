@@ -2,6 +2,7 @@ package models
 
 import anorm._
 import anorm.SqlParser._
+import com.github.t3hnar.bcrypt._
 import java.awt.Point
 import java.sql.Timestamp
 import java.util.{ Date, UUID }
@@ -116,19 +117,32 @@ object CashPoint {
         'city                 -> location.city,
         'country              -> location.country,
         'serial               -> serial,
-        'token                -> "this is some shit",
+        'token                -> (serial+"we still need to think about this").bcrypt,
         'note                 -> note
       ).executeInsert[List[CashPoint]](CashPoint.simple *)
       CashPoint.findById(res.head.id)
     }
   }
-  def findAll(): Seq[CashPoint] = List[CashPoint]()
+
+  def findAll(): Seq[CashPoint] = {
+    DB.withConnection { implicit c =>
+      SQL("SELECT * FROM cash_points").as(CashPoint.simple *)
+    }
+  }
+
   def findById(id: UUID): Option[CashPoint] = {
     DB.withConnection { implicit c =>
       SQL("SELECT * FROM cash_points WHERE id = {id}")
       .on('id -> id).as(CashPoint.simple.singleOpt)
     }
   }
-  //def findNear(
-  //def validate(id: UUID, token: String, transaction: Transaction)
+
+  //def findNear(location: Point): Seq[CashPoint] = { }
+
+  def validate(id: UUID, secret: String): Boolean = {
+    CashPoint.findById(id) match {
+      case Some(p) => if ((secret+"we still need to think about this").isBcrypted(p.tokenHash)) true else false
+      case None    => false
+    }
+  }
 }

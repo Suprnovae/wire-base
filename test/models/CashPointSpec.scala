@@ -67,7 +67,7 @@ class CashPointSpec extends Specification {
         UUID.randomUUID,
         Location(new Point(23, 443), "Long Island Str 23", "Gotham", "US"),
         "JJQI-293A-2JJ2-JIQ5-823N",
-        "blablablablah",
+        "a weird looking token",
         true,
         None
       )
@@ -79,13 +79,42 @@ class CashPointSpec extends Specification {
     "be creatable with helper" in { 
       running(FakeApplication()) {
         val p = CashPoint.create(
-          "UC_NYC_MANH_WALLSTR_0012",
-          Location(new Point(232, 433), "Wall Street 12", "NYC", "US"),
+          "US_NYC_MANH_WALLSTR_0012",
+          Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
           Some("The ATM near the NYSE at 11 Wall Street")
         )
         p.isDefined === true
-        p.get.serial === "UC_NYC_MANH_WALLSTR_0012"
+        p.get.serial === "US_NYC_MANH_WALLSTR_0012"
         p.get.location.country === "US"
+      }
+    }
+    "returns empty list when there are no cash points" in empty_set {
+      running(FakeApplication()) {
+        CashPoint.findAll.isEmpty === true
+      }
+    }
+    // TODO: Test validation when token field in db contains a non bcrypt phrase, this currently throws an IllegalArgumentException
+    "authenticates cash points by serial number" in {
+      running(FakeApplication()) {
+        val p = CashPoint.create(
+          "GB_LOND_COLO_PTRNOST_0004",
+          Location(new Point(244, 234), "10 Paternoster Square", "London", "GB"),
+          None
+        )
+        p.isDefined === true
+        p.get.serial === "GB_LOND_COLO_PTRNOST_0004"
+        CashPoint.validate(p.get.id, p.get.serial) === true
+        CashPoint.validate(p.get.id, "some invalid crap") === false
+      }
+    }
+  }
+
+  object empty_set extends Before {
+    def before {
+      running(FakeApplication()) {
+        DB.withConnection { implicit c =>
+          SQL("""DELETE FROM cash_points""").executeUpdate()
+        }
       }
     }
   }
