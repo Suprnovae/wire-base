@@ -1,16 +1,16 @@
-import org.specs2.mutable._
-
-import play.api.Play.current
-import play.api.db.DB
-import play.api.test._
-import play.api.test.Helpers._
-
 import anorm._
 import anorm.SqlParser._
 
-import java.util.{UUID, Date}
-import scala.util.Try
-import scala.util.Random
+import org.specs2.mutable._
+
+import java.util.{ Date, UUID }
+
+import play.api.db.DB
+import play.api.Play.current
+import play.api.test._
+import play.api.test.Helpers._
+
+import scala.util.{ Random, Try }
 
 class TransactionSpec extends Specification {
   step {
