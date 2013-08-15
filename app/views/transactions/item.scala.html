@@ -1,0 +1,6 @@
+@(transaction: Transaction)
+  <li data-project="@transaction.id">
+    <span class="amount">@transaction.amount</span>
+    <span class="receiver">@transaction.receiver.name</span>
+    <span class="sender">@transaction.sender.name</span>
+  </li>

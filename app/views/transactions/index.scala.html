@@ -1,0 +1,7 @@
+@(transactions: Seq[Transaction])
+
+<ul>
+  @transactions.map { transaction =>
+    @views.html.transactions.item(transaction)
+  }
+</ul>
