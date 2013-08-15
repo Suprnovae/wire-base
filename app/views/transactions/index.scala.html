@@ -1,6 +1,6 @@
 @(transactions: Seq[Transaction])
 
-@main("Some title"){
+@main("Transactions"){
   <div class="list-group" style="margin: 0 10px 10px 10px;">
     @transactions.map { transaction =>
       @views.html.transactions.item(transaction)

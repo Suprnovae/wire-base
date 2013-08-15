@@ -2,6 +2,7 @@ package test
 
 import org.specs2.mutable._
 
+import java.util.UUID
 import play.api.test._
 import play.api.test.Helpers._
 
@@ -38,5 +39,36 @@ class TransactionsSpec extends Specification {
         contentType(page) must beSome.which(_ == "text/html")
       }
     }
+
+    "send 404 on requesting details with non-existent id" in {
+      running(FakeApplication()) {
+        // html
+        val uuid = (new UUID(0, 0)).toString
+        val request = FakeRequest(GET, "/transactions/" + uuid)
+        route(request) must beNone
+
+        val page = route(request).get
+        contentType(page) must beSome.which(_ == "text/html")
+      }
+    }
+
+    "send 404 on requesting json details with non-existing id" in {
+      running(FakeApplication()) {
+        // json
+        val uuid = (new UUID(0, 0)).toString
+        val headers = FakeHeaders(Seq("ACCEPT" -> Seq("application/json")))
+        val request = FakeRequest(GET, "/transactions/" + uuid, headers, "")
+        route(request) must beNone
+
+        val page = route(request).get
+        contentType(page) must beSome.which(_ == "application/json")
+      }
+    }
+
+    /*"return details upon request" in {
+      running(FakeApplication()) {
+        pending
+      }
+    }*/
   }
 }

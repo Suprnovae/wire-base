@@ -29,7 +29,36 @@ object Transactions extends Controller {
     }
   }
 
-  def getItem(id: UUID) = TODO // return the overview
+  def getItem(id: Any) = Action { implicit request =>
+    implicit val transactionWrites = new Writes[Transaction] {
+      def writes(t: Transaction): JsValue = {
+        Json.obj(
+          "id"       -> JsString(t.id.toString),
+          "amount"   -> t.amount,
+          "receiver" -> JsString(t.receiver.name),
+          "sender"   -> JsString(t.sender.name),
+          "date"     -> JsString(t.deposit.date.toString)
+        )
+      }
+    }
+
+    val uuid: UUID = id match {
+      case k: UUID => k
+      case k: String => UUID.fromString(k)
+      case k => UUID.fromString(k.toString)
+    }
+
+    val transaction = Transaction.findById(uuid)
+    render {
+      if(transaction.isDefined) {
+        case Accepts.Html() => Ok(html.transactions.detail(transaction.get))
+        case Accepts.Json() => Ok(Json.toJson(transaction.get))
+      } else {
+        case Accepts.Html() => NotFound(html.common.notfound())
+      }
+    }
+  }
+
   def update(id: UUID, content:Transaction) = TODO //
   def remove(id: UUID) = TODO //
   def add(transaction: Transaction) = TODO //

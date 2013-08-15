@@ -21,7 +21,7 @@
       </div>
       <div class="collapse navbar-collapse menu-sections">
         <ul class="nav navbar-nav">
-          <li class="active"><a href="#">Transactions</a></li>
+          <li @if(title == "Transactions") { class="active" }><a href="@routes.Transactions.index()">Transactions</a></li>
           <li><a href="#">Cashpoints</a></li>
           <li><a href="#">Users</a></li>
         </ul>

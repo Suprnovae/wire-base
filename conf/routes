@@ -9,3 +9,4 @@ GET     /                           controllers.Application.index
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
 
 GET     /transactions               controllers.Transactions.index(page:Int ?= 0, items:Int ?= 100)
+GET     /transactions/:id           controllers.Transactions.getItem(id: String)
