@@ -3,6 +3,8 @@ package controllers
 import java.util.UUID
 import models._
 import play.api._
+import play.api.data._
+import play.api.data.Forms._
 import play.api.libs.json._
 import play.api.mvc._
 import views._
@@ -61,6 +63,26 @@ object Transactions extends Controller {
 
   def update(id: UUID, content:Transaction) = TODO //
   def remove(id: UUID) = TODO //
-  def add(transaction: Transaction) = TODO //
-  
+
+  val submitForm = Form(
+    tuple(
+      "amount" -> nonEmptyText,
+      "payment" -> number,
+      "secret" -> nonEmptyText,
+      "sender_name" -> nonEmptyText,
+      "sender_address" -> nonEmptyText,
+      "sender_city" -> nonEmptyText,
+      "sender_country" -> nonEmptyText,
+      "receiver_name" -> nonEmptyText, 
+      "receiver_mobile" -> nonEmptyText,
+      "receiver_country" -> nonEmptyText
+    )
+  )
+  def add(transaction: Transaction) = Action { implicit request =>
+    submitForm.bindFromRequest.fold(
+      formWithErrors => BadRequest("Oh shit"),
+      value => Ok("something nice? " + value)
+    )
+  }
+
 }

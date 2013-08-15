@@ -1,0 +1,90 @@
+  <div class="modal fade" id="new" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h2 class="modal-title">Create new transaction</h2>
+        </div>
+        <div class="modal-body">
+          <form class="form-horizontal" role="form" method="post">
+            <fieldset>
+              <legend>Transaction</legend>
+              <div class="form-group">
+                <label for="amount">Amount</label>
+                <div class="input-group">
+                  <span class="input-group-addon">&euro;</span>
+                  <input type="text" class="form-control" id="amount" placeholder="100">
+                  <span class="input-group-addon">.00</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="payment">Payment option</label>
+                <select id="payment" class="form-control">
+                  <option value="1">CashCow</option>
+                  <option value="2">Payer</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="secret">Secret</label>
+                <input type="password" class="form-control" id="secret" placeholder="">
+              </div>
+            </fieldset>
+      
+            <fieldset>
+              <legend>Sender</legend>
+              <div class="form-group">
+                <label for="sender_name">Name</label>
+                <input type="text" class="form-control" id="sender_name" placeholder="">
+              </div>
+              <div class="form-group">
+                <label for="sender_address">Address</label>
+                <input type="text" class="form-control" id="sender_address" placeholder="">
+              </div>
+              <div class="form-group">
+                <label for="sender_city">City</label>
+                <input type="text" class="form-control" id="sender_city" placeholder="">
+              </div>
+              <div class="form-group">
+                <label for="sender_email">Email</label>
+                <input type="text" class="form-control" id="sender_email" placeholder="">
+              </div>
+              <div class="form-group">
+                <label for="sender_country">Country</label>
+                <select id="sender_country" class="form-control">
+                  <option value="1">Suriname</option>
+                  <option value="2">The Netherlands</option>
+                  <option value="3">United States</option>
+                  <option value="4">Zimbabwe</option>
+                </select>
+              </div>
+            </fieldset>
+      
+            <fieldset>
+              <legend>Receiver</legend>
+              <div class="form-group">
+                <label for="receiver_name">Name</label>
+                <input type="text" class="form-control" id="receiver_name" placeholder="">
+              </div>
+              <div class="form-group">
+                <label for="receiver_mobile">Mobile phonenumber</label>
+                <input type="text" class="form-control" id="receiver_mobile" placeholder="">
+              </div>
+              <div class="form-group">
+                <label for="receiver_country">Country</label>
+                <select id="receiver_country" class="form-control">
+                  <option value="1">Suriname</option>
+                  <option value="2">The Netherlands</option>
+                  <option value="3">United States</option>
+                  <option value="4">Zimbabwe</option>
+                </select>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
