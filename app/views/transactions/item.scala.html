@@ -1,6 +1,6 @@
 @(transaction: Transaction)
-  <li data-project="@transaction.id">
-    <span class="amount">@transaction.amount</span>
-    <span class="receiver">@transaction.receiver.name</span>
-    <span class="sender">@transaction.sender.name</span>
-  </li>
+  <a href="#" class="list-group-item">
+    <span class="amount label label-warning">&euro; @transaction.amount</span> wired from
+    <span class="sender label label-info">@transaction.sender.name</span> to
+    <span class="receiver label label-info">@transaction.receiver.name</span>
+  </a>

@@ -1,7 +1,9 @@
 @(transactions: Seq[Transaction])
 
-<ul>
-  @transactions.map { transaction =>
-    @views.html.transactions.item(transaction)
-  }
-</ul>
+@main("Some title"){
+  <div class="list-group" style="margin: 0 10px 10px 10px;">
+    @transactions.map { transaction =>
+      @views.html.transactions.item(transaction)
+    }
+  </div>
+}

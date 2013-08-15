@@ -8,18 +8,20 @@ import play.api.mvc._
 import views._
 
 object Transactions extends Controller {
-  
-  implicit val transactionWrites = new Writes[Transaction] {
-    def writes(t: UUID): JsString = new JsString(t.toString)
-    def writes(t: Transaction): JsValue = {
-      Json.obj(
-        "amount" -> t.amount,
-        "id"     -> JsString(t.id.toString)
-      )
-    }
-  }
 
   def index(page: Int = 0, maxItems: Int = 100) = Action { implicit request =>
+    implicit val transactionWrites = new Writes[Transaction] {
+      def writes(t: Transaction): JsValue = {
+        Json.obj(
+          "id"       -> JsString(t.id.toString),
+          "amount"   -> t.amount,
+          "receiver" -> JsString(t.receiver.name),
+          "sender"   -> JsString(t.sender.name),
+          "date"     -> JsString(t.deposit.date.toString)
+        )
+      }
+    }
+
     val transactions = Transaction.findAll
     render {
       case Accepts.Html() => Ok(html.transactions.index(transactions))
