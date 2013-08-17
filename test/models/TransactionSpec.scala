@@ -1,3 +1,5 @@
+package test.models
+
 import anorm._
 import anorm.SqlParser._
 
@@ -78,6 +80,7 @@ class TransactionSpec extends Specification {
             transaction.amount === 420
           )
         }
+        ok
       }
     }
     "be None upon fetching a non-existent UUID" in {

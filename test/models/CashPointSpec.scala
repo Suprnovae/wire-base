@@ -1,3 +1,5 @@
+package test.models
+
 import anorm._
 import anorm.SqlParser._
 
@@ -56,6 +58,7 @@ class CashPointSpec extends Specification {
           )
         }
       }
+      ok
     }
     "be nothing upon fetching a non-existent UUID" in { 
       running(FakeApplication()) {
