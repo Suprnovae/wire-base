@@ -57,6 +57,7 @@ object Transactions extends Controller {
         case Accepts.Json() => Ok(Json.toJson(transaction.get))
       } else {
         case Accepts.Html() => NotFound(html.common.notfound())
+        case _              => NotFound(Json.toJson("Not found"))
       }
     }
   }
