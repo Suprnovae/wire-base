@@ -1,0 +1,24 @@
+@(transaction: Transaction)
+
+@main("Transactions"){
+  <div class="panel" style="margin: 0 10px 10px 10px;">
+    <div class="panel-heading"><h1>&euro; @transaction.amount</h1></div>
+    <!--<div class="panel-body">
+    </div>-->
+    <div class="list-group">
+      <div class="list-group-item">
+        <h2 class="list-group-item-heading">Receiver</h2>
+        <p class="list-group-item-text">@transaction.receiver.name</p>
+      </div>
+      <div class="list-group-item">
+        <h2 class="list-group-item-heading">Sender</h2>
+        <p class="list-group-item-text">@transaction.sender.name</p>
+      </div>
+      <div class="list-group-item">
+        <h2 class="list-group-item-heading">Details</h2>
+        <p class="list-group-item-text">Deposited on: @transaction.deposit.date</p>
+        <p class="list-group-item-text">Withdrawal information not available</p>
+      </div>
+    </div>
+  </div>
+}
