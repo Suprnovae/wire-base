@@ -93,6 +93,12 @@ object Transaction extends Model {
     }
   }
   def findByTokens(code: String, secret: String): Option[Transaction] = None
+  def count: Long = {
+    DB.withConnection { implicit c =>
+      SQL("""SELECT COUNT(*) AS c FROM transactions""")
+        .apply().head[Long]("c")
+    }
+  }
   def countByCode(code: String): Long = {
     DB.withConnection { implicit c =>
       SQL("""SELECT COUNT(*) AS c FROM transactions WHERE code = {code}""")

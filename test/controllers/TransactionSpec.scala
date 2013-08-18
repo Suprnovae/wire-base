@@ -93,7 +93,6 @@ class TransactionSpec extends Specification {
 
         val url = "/transactions/" + uuid.toString
         val body = "sender_name=Jack+Black&amount=29399"
-        //var page = route(FakeRequest(PUT, url, FakeHeaders(), body)).get
         var page = route(FakeRequest(GET, url, FakeHeaders(), body)).get
         status(page) must equalTo(OK)
 
@@ -101,6 +100,21 @@ class TransactionSpec extends Specification {
         transaction.isDefined === true
         transaction.get.sender.name === "Jack Black"
         transaction.get.amount === 29299
+      }
+    }
+
+    "create a new resource" in {
+      running(FakeApplication()) {
+        val count = Transaction.count
+
+        val url = "/transactions"
+        val body = "amount=4000&payment=1&secret=Winer92&receiver_name=Q&receiver_mobile=123&receiver_country=XX&sender_name=Z&sender_address=Nothing+32&sender_phonenumber=5550&sender_email=blank%40example.com&sender_city=NYC&sender_country=US"
+        var page = route(FakeRequest(POST, url, FakeHeaders(), body)).get
+
+        contentAsString(page) must contain("blank@example.com")
+        status(page) must equalTo(OK)
+
+        Transaction.count === count+1
       }
     }
     /*"return details upon request" in {

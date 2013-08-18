@@ -228,6 +228,20 @@ class TransactionSpec extends Specification {
         }
       }
     }
+    "counts the amount of transactions" in {
+      running(FakeApplication()) {
+        DB.withConnection { implicit connection =>
+          val old_count = Transaction.count
+          Transaction.create(
+            40,
+            Receiver("Candice Cleare", "199283832", "AU"),
+            Sender("Fernando da Gama", "2993939", "BR", "Sao Paolo", "Unknown", None, "f.gama@example.co.br"),
+            "vishnu"
+          )
+          Transaction.count === old_count+1
+        }
+      }
+    }
     "counts the non-completed transactions by code" in {
       running(FakeApplication()) {
         DB.withConnection { implicit connection =>
