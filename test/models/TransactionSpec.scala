@@ -181,6 +181,7 @@ class TransactionSpec extends Specification {
         t.isDefined === true
         Transaction.validate(t.get.id, t.get.transactionCode, secret) === true
         Transaction.validate(t.get.id, t.get.transactionCode, "no") === false
+        Transaction.validate(t.get.id, "12345678", secret) === false
       }
     }
     "finds all transactions by given tokens" in { pending }

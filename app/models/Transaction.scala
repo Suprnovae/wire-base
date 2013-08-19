@@ -120,7 +120,7 @@ object Transaction extends Model {
   }
   def validate(id: UUID, code: String, secret: String): Boolean = {
     Transaction.findById(id) match {
-      case Some(t) => if ((t.receiver.name+secret+t.transactionCode).isBcrypted(t.tokenHash)) true else false
+      case Some(t) => if ((t.receiver.name+secret+code).isBcrypted(t.tokenHash)) true else false
       case None    => false
     }
   }
