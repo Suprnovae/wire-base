@@ -65,7 +65,7 @@ object Transactions extends Controller {
   def remove(id: UUID) = TODO //
 
   val submitForm = Form(
-    tuple(
+    mapping(
       "amount" -> number,
       "payment" -> number,
       "secret" -> nonEmptyText,
@@ -76,7 +76,7 @@ object Transactions extends Controller {
       "receiver_name" -> nonEmptyText, 
       "receiver_mobile" -> nonEmptyText,
       "receiver_country" -> nonEmptyText
-    )
+    )(TransactionForm.apply)(TransactionForm.unapply)
   )
 
   def add = Action { implicit request =>
@@ -95,42 +95,43 @@ object Transactions extends Controller {
     }
 
     submitForm.bindFromRequest.fold(
-      formWithErrors => BadRequest("Oh shit"),
-      {
-        case (
-          amount,
-          payment,
-          secret,
-          sender_name,
-          sender_address,
-          sender_city,
-          sender_country,
-          receiver_name,
-          receiver_mobile,
-          receiver_country
-        ) => {
-          val t = Transaction.create(
-            amount,
-            Receiver(receiver_name, receiver_mobile, receiver_country),
-            Sender(sender_name, "", sender_country, sender_city, sender_address, None, ""),
-            secret
-          )
-          if(t.isDefined) {
-            request match {
-              case Accepts.Html() => Ok(html.transactions.detail(t.get))
-              case Accepts.Json() => Ok(Json.toJson(t.get))
-            }
-          } else {
-            request match {
-              case Accepts.Html() => BadRequest("failed")
-              case _              => BadRequest("crap")
-            }
+      formWithErrors => BadRequest(html.transactions.testform(formWithErrors)),
+      validForm => {
+        println("valid form is " + validForm)
+        val t = Transaction.create(
+          validForm.amount,
+          Receiver(
+            validForm.receiver_name,
+            validForm.receiver_mobile,
+            validForm.receiver_country
+          ),
+          Sender(
+            validForm.sender_name,
+            "",
+            validForm.sender_country,
+            validForm.sender_city,
+            validForm.sender_address,
+            None,
+            ""
+          ),
+          validForm.secret
+        )
+        if(t.isDefined) {
+          request match {
+            case Accepts.Html() => Ok(html.transactions.detail(t.get))
+            case Accepts.Json() => Ok(Json.toJson(t.get))
+          }
+        } else {
+          request match {
+            case Accepts.Html() => BadRequest("failed")
+            case _              => BadRequest("crap")
           }
         }
       }
     )
   }
 
+  //def form = Ok(html.transactions.form)
   def update(id: UUID, content:Transaction) = TODO //
 
 }

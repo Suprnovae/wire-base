@@ -3,6 +3,8 @@ package test.controllers
 import java.util.UUID
 import models._
 import org.specs2.mutable._
+import play.api.data._
+import play.api.data.Forms._
 import play.api.mvc._
 import play.api.test._
 import play.api.test.Helpers._
@@ -109,10 +111,44 @@ class TransactionSpec extends Specification {
 
         val url = "/transactions"
         val body = "amount=4000&payment=1&secret=Winer92&receiver_name=Q&receiver_mobile=123&receiver_country=XX&sender_name=Z&sender_address=Nothing+32&sender_phonenumber=5550&sender_email=blank%40example.com&sender_city=NYC&sender_country=US"
-        var page = route(FakeRequest(POST, url, FakeHeaders(), body)).get
+        val params = Map(
+          "amount"             -> Seq("4000"),
+          "payment"            -> Seq("1"),
+          "secret"             -> Seq("Winer92"),
+          "receiver_name"      -> Seq("Q"),
+          "receiver_mobile"    -> Seq("1234"),
+          "receiver_country"   -> Seq("XX"),
+          "sender_name"        -> Seq("Z"),
+          "sender_address"     -> Seq("Nothing 32"),
+          "sender_phonenumber" -> Seq("5550"),
+          "sender_email"       -> Seq("blank@example.com"),
+          "sender_city"        -> Seq("NYC"),
+          "sender_country"     -> Seq("US")
+        )
+        //var page = route(FakeRequest(POST, url, FakeHeaders(), body)).get
+        var page = route(FakeRequest(POST, url).withRawBody(body.getBytes)).get
 
+        val form = Form(
+          mapping(
+            "amount" -> number,
+            "payment" -> number,
+            "secret" -> nonEmptyText,
+            "sender_name" -> nonEmptyText,
+            "sender_address" -> nonEmptyText,
+            "sender_city" -> nonEmptyText,
+            "sender_country" -> nonEmptyText,
+            "receiver_name" -> nonEmptyText, 
+            "receiver_mobile" -> nonEmptyText,
+            "receiver_country" -> nonEmptyText
+          )(TransactionForm.apply)(TransactionForm.unapply)
+        )
+
+        //form.bind(params).hasErrors must beFalse
+        //form.errors.size must equalTo(0)
+
+        /*val result = route(FakeRequest(POST, url), params).get
         contentAsString(page) must contain("blank@example.com")
-        status(page) must equalTo(OK)
+        status(page) must equalTo(OK)*/
 
         Transaction.count === count+1
       }

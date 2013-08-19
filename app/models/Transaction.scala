@@ -32,6 +32,19 @@ case class Sender(
   email: String
 )
 
+case class TransactionForm(
+  amount: Int,
+  payment: Int,
+  secret: String,
+  sender_name: String,
+  sender_address: String,
+  sender_city: String,
+  sender_country: String,
+  receiver_name: String,
+  receiver_mobile: String,
+  receiver_country: String
+)
+
 case class Transaction(
   id: UUID,
   amount: BigDecimal,
