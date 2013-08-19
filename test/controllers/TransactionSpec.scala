@@ -14,7 +14,6 @@ class TransactionSpec extends Specification {
   "/transactions" should {
 
     "render the result as json upon request" in {
-      pending
       running(FakeApplication()) {
         val headers = FakeHeaders(Seq("ACCEPT" -> Seq("application/json")))
         val request = FakeRequest(GET, "/transactions", headers, "")
@@ -78,6 +77,36 @@ class TransactionSpec extends Specification {
         page = route(FakeRequest(GET, url, headers, "")).get
         status(page) must equalTo(OK)
         contentType(page) must beSome.which(_ == "application/json")
+      }
+    }
+
+    "fetches a entry by code and secret" in {
+      running(FakeApplication()) {
+        Transaction.create(
+          400000,
+          Receiver("Rachel Salas", "2349999", "US"),
+          Sender("Will Salas", "686278912", "US", "Dayton", "Unknown", None, "will.s@ghetto.com"),
+          "LoveConquersTime"
+        ).isDefined === true
+
+        val t = Transaction.create(
+          2920,
+          Receiver("Will Salas", "686278912", "US"),
+          Sender("Sylvia Weis", "9297392382", "US", "Greenwich", "Unknown", None, "golden.gurl@mailbox.com"),
+          "TimeWillTell"
+        )
+
+        t.isDefined === true
+        val code = t.get.transactionCode
+
+        
+        var page = route(FakeRequest(
+          GET, "/transactions?code=" + code + "&secret=TimeWillTell"
+        )).get
+
+        status(page) must equalTo(OK)
+        contentAsString(page) must contain("Will Salas")
+        contentAsString(page) must not contain("Rachel Salas")
       }
     }
 

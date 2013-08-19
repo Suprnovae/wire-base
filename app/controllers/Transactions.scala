@@ -12,7 +12,7 @@ import views._
 
 object Transactions extends Controller {
 
-  def index(page: Int = 0, maxItems: Int = 100) = Action { implicit request =>
+  def index(code: String, secret: String, page: Int = 0, maxItems: Int = 100) = Action { implicit request =>
     implicit val transactionWrites = new Writes[Transaction] {
       def writes(t: Transaction): JsValue = {
         Json.obj(
@@ -25,10 +25,22 @@ object Transactions extends Controller {
       }
     }
 
-    val transactions = Transaction.findAll
-    render {
-      case Accepts.Html() => Ok(html.transactions.index(transactions))
-      case Accepts.Json() => Ok(Json.toJson(transactions))
+    if(code.isEmpty && secret.isEmpty) {
+      val transactions = Transaction.findAll
+      render {
+        case Accepts.Html() => Ok(html.transactions.index(transactions))
+        case Accepts.Json() => Ok(Json.toJson(transactions))
+      }
+    } else {
+      val transaction = Transaction.findByTokens(code, secret)
+      if(transaction.isDefined) {
+        render {
+          case Accepts.Html() => Ok(html.transactions.detail(transaction.get))
+          case Accepts.Json() => Ok(Json.toJson(transaction.get))
+        }
+      } else {
+        BadRequest
+      }
     }
   }
 
