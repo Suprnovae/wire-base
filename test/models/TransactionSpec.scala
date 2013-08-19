@@ -184,7 +184,30 @@ class TransactionSpec extends Specification {
         Transaction.validate(t.get.id, "12345678", secret) === false
       }
     }
-    "finds all transactions by given tokens" in { pending }
+    "finds a transaction by given tokens" in { 
+      running(FakeApplication()) {
+        val secret = "Aha Aha! G'Yuk!"
+        val t = Transaction.create(
+          620,
+          Receiver("Goofey", "8399920", "US"),
+          Sender("Mickey Mouse", "1828283", "US", "Disney World", "Wonderway 123", None, "mickey@mouse.com"),
+          secret 
+        )
+
+        t.isDefined === true
+        val code = t.get.transactionCode
+
+        println("result " + Transaction.findByTokens(code, secret).isDefined)
+        Transaction.findByTokens(code, secret).isDefined === true
+        Transaction.findByTokens(code, secret).get.id === t.get.id
+
+        Transaction.findByTokens(code, "Nonsense! Aha!").isDefined === false
+        Transaction.findByTokens("12345567", secret).isDefined === false
+
+        Try(Transaction.withdraw(t.get.id)).isSuccess === true
+        Transaction.findByTokens(code, secret).isDefined === false
+      }
+    }
     "finds all non-completed transactions by code" in { 
       running(FakeApplication()) {
         DB.withConnection { implicit connection =>
