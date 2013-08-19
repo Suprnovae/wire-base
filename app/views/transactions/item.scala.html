@@ -1,0 +1,6 @@
+@(transaction: Transaction)
+  <a href="@routes.Transactions.getItem(transaction.id.toString)" class="list-group-item">
+    <span class="amount label label-warning">&euro; @transaction.amount</span> wired from
+    <span class="sender label label-info">@transaction.sender.name</span> to
+    <span class="receiver label label-info">@transaction.receiver.name</span>
+  </a>

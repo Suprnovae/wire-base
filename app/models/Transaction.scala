@@ -32,6 +32,19 @@ case class Sender(
   email: String
 )
 
+case class TransactionForm(
+  amount: Int,
+  payment: Int,
+  secret: String,
+  sender_name: String,
+  sender_address: String,
+  sender_city: String,
+  sender_country: String,
+  receiver_name: String,
+  receiver_mobile: String,
+  receiver_country: String
+)
+
 case class Transaction(
   id: UUID,
   amount: BigDecimal,
@@ -44,7 +57,7 @@ case class Transaction(
 )
 
 object Transaction extends Model {
-  val simple = {
+  val complete = {
     get[UUID]("transactions.id")~
     get[BigDecimal]("transactions.amount")~
     get[String]("transactions.receiver_name")~
@@ -71,6 +84,7 @@ object Transaction extends Model {
       )
     }
   }
+  val simple = complete
 
   def findAll(): Seq[Transaction] = {
     DB.withConnection { implicit c =>
@@ -92,7 +106,28 @@ object Transaction extends Model {
       ).as(Transaction.simple.singleOpt)
     }
   }
-  def findByTokens(code: String, secret: String): Option[Transaction] = None
+  def findByTokens(code: String, secret: String): Option[Transaction] = {
+    DB.withConnection { implicit c =>
+      val result = SQL("""
+        SELECT * FROM transactions
+        WHERE code = {code} AND withdrawn_at IS NULL
+      """)
+      .on('code -> code)
+      .as(Transaction.simple.singleOpt)
+
+      if(result.isDefined && Transaction.validate(result.get.id, code, secret)) {
+        result
+      } else {
+        None
+      }
+    }
+  }
+  def count: Long = {
+    DB.withConnection { implicit c =>
+      SQL("""SELECT COUNT(*) AS c FROM transactions""")
+        .apply().head[Long]("c")
+    }
+  }
   def countByCode(code: String): Long = {
     DB.withConnection { implicit c =>
       SQL("""SELECT COUNT(*) AS c FROM transactions WHERE code = {code}""")
@@ -101,7 +136,7 @@ object Transaction extends Model {
   }
   def validate(id: UUID, code: String, secret: String): Boolean = {
     Transaction.findById(id) match {
-      case Some(t) => if ((t.receiver.name+secret+t.transactionCode).isBcrypted(t.tokenHash)) true else false
+      case Some(t) => if ((t.receiver.name+secret+code).isBcrypted(t.tokenHash)) true else false
       case None    => false
     }
   }
