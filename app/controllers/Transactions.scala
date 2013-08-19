@@ -131,8 +131,8 @@ object Transactions extends Controller {
         )
         if(t.isDefined) {
           request match {
-            case Accepts.Html() => Ok(html.transactions.detail(t.get))
-            case Accepts.Json() => Ok(Json.toJson(t.get))
+            case Accepts.Html() => Created(html.transactions.detail(t.get))
+            case Accepts.Json() => Created(Json.toJson(t.get))
           }
         } else {
           request match {

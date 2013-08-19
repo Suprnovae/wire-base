@@ -152,7 +152,7 @@ class TransactionSpec extends Specification {
           .withFormUrlEncodedBody(params.toList: _*)
         ).get
 
-        status(page) must equalTo(OK)
+        status(page) must equalTo(CREATED)
         Transaction.count === count+1
       }
     }
