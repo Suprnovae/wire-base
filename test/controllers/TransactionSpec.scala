@@ -81,30 +81,6 @@ class TransactionSpec extends Specification {
       }
     }
 
-    "updates the resource" in {
-      running(FakeApplication()) {
-        val t = Transaction.create(
-          10,
-          Receiver("Amir Sookhnanan", "18281300200", "IN"),
-          Sender("Sita Ramkewan", "128319283891", "SR", "Paramaribo", "Unknown", None, "prettysita@example."),
-          "vishnu"
-        )
-
-        t.isDefined === true
-        val uuid = t.get.id
-
-        val url = "/transactions/" + uuid.toString
-        val body = "sender_name=Jack+Black&amount=29399"
-        var page = route(FakeRequest(GET, url, FakeHeaders(), body)).get
-        status(page) must equalTo(OK)
-
-        val transaction = Transaction.findById(t.get.id)
-        transaction.isDefined === true
-        transaction.get.sender.name === "Jack Black"
-        transaction.get.amount === 29299
-      }
-    }
-
     "create a new resource" in {
       running(FakeApplication()) {
         val count = Transaction.count
@@ -112,51 +88,94 @@ class TransactionSpec extends Specification {
         val url = "/transactions"
         val body = "amount=4000&payment=1&secret=Winer92&receiver_name=Q&receiver_mobile=123&receiver_country=XX&sender_name=Z&sender_address=Nothing+32&sender_phonenumber=5550&sender_email=blank%40example.com&sender_city=NYC&sender_country=US"
         val params = Map(
-          "amount"             -> Seq("4000"),
-          "payment"            -> Seq("1"),
-          "secret"             -> Seq("Winer92"),
-          "receiver_name"      -> Seq("Q"),
-          "receiver_mobile"    -> Seq("1234"),
-          "receiver_country"   -> Seq("XX"),
-          "sender_name"        -> Seq("Z"),
-          "sender_address"     -> Seq("Nothing 32"),
-          "sender_phonenumber" -> Seq("5550"),
-          "sender_email"       -> Seq("blank@example.com"),
-          "sender_city"        -> Seq("NYC"),
-          "sender_country"     -> Seq("US")
+          "amount"             -> "4000",
+          "payment"            -> "1",
+          "secret"             -> "Winer92",
+          "receiver_name"      -> "Q",
+          "receiver_mobile"    -> "1234",
+          "receiver_country"   -> "XX",
+          "sender_name"        -> "Z",
+          "sender_address"     -> "Nothing 32",
+          "sender_phonenumber" -> "5550",
+          "sender_email"       -> "blank@example.com",
+          "sender_city"        -> "NYC",
+          "sender_country"     -> "US"
         )
-        //var page = route(FakeRequest(POST, url, FakeHeaders(), body)).get
-        var page = route(FakeRequest(POST, url).withRawBody(body.getBytes)).get
-
         val form = Form(
           mapping(
-            "amount" -> number,
-            "payment" -> number,
-            "secret" -> nonEmptyText,
-            "sender_name" -> nonEmptyText,
-            "sender_address" -> nonEmptyText,
-            "sender_city" -> nonEmptyText,
-            "sender_country" -> nonEmptyText,
-            "receiver_name" -> nonEmptyText, 
-            "receiver_mobile" -> nonEmptyText,
+            "amount"           -> number,
+            "payment"          -> number,
+            "secret"           -> nonEmptyText,
+            "sender_name"      -> nonEmptyText,
+            "sender_address"   -> nonEmptyText,
+            "sender_city"      -> nonEmptyText,
+            "sender_country"   -> nonEmptyText,
+            "receiver_name"    -> nonEmptyText, 
+            "receiver_mobile"  -> nonEmptyText,
             "receiver_country" -> nonEmptyText
           )(TransactionForm.apply)(TransactionForm.unapply)
         )
 
-        //form.bind(params).hasErrors must beFalse
-        //form.errors.size must equalTo(0)
+        form.bind(params).hasErrors must beFalse
+        form.errors.size must equalTo(0)
 
-        /*val result = route(FakeRequest(POST, url), params).get
-        contentAsString(page) must contain("blank@example.com")
-        status(page) must equalTo(OK)*/
+        val page = route(FakeRequest(POST, url)
+          .withFormUrlEncodedBody(params.toList: _*)
+        ).get
 
+        status(page) must equalTo(OK)
         Transaction.count === count+1
       }
     }
-    /*"return details upon request" in {
+
+    "withdraws the entry" in {
       running(FakeApplication()) {
-        pending
+        var t = Transaction.create(
+          40000,
+          Receiver("Daisy Buchanan", "686278912", "US"),
+          Sender("Jay Gatsby", "199288333", "US", "New York", "Unknown", None, "jay@gatsby.com"),
+          "green light"
+        )
+
+        t.isDefined === true
+        val url = "/transactions/" + t.get.id.toString
+        val code = t.get.transactionCode
+        status(route(FakeRequest(PUT, url)).get) must equalTo(CONFLICT)
+        Transaction.findById(t.get.id).get.withdrawal.isDefined === false
+
+        status(route(FakeRequest(
+          PUT, url + "?secret=" + "green+light"
+        )).get) must equalTo(CONFLICT)
+        Transaction.findById(t.get.id).get.withdrawal.isDefined === false
+
+        status(route(FakeRequest(
+          PUT, url + "?code=" + code
+        )).get) must equalTo(CONFLICT)
+        Transaction.findById(t.get.id).get.withdrawal.isDefined === false
+
+        status(route(FakeRequest(
+          PUT, url + "?code=121233211" + "&secret=" + "green+light"
+        )).get) must equalTo(CONFLICT)
+        Transaction.findById(t.get.id).get.withdrawal.isDefined === false
+
+        status(route(FakeRequest(
+          PUT, url + "?code=" + code + "&secret=" + "joker"
+        )).get) must equalTo(CONFLICT)
+        Transaction.findById(t.get.id).get.withdrawal.isDefined === false
+
+        status(route(FakeRequest(
+          PUT, url + "?code=" + code + "&secret=" + "green+light"
+        )).get) must equalTo(OK)
+        Transaction.findById(t.get.id).get.withdrawal.isDefined === true
+
+        val old_withdrawal = Transaction.findById(t.get.id).get.withdrawal
+        status(route(FakeRequest(
+          PUT, url + "?code=" + code + "&secret=" + "green+light"
+        )).get) must equalTo(CONFLICT)
+        Transaction.findById(t.get.id).get.withdrawal.isDefined === true
+        Transaction.findById(t.get.id).get.withdrawal must equalTo(old_withdrawal)
       }
-    }*/
+    }
+
   }
 }

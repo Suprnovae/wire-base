@@ -7,6 +7,7 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.libs.json._
 import play.api.mvc._
+import scala.util._
 import views._
 
 object Transactions extends Controller {
@@ -132,6 +133,38 @@ object Transactions extends Controller {
   }
 
   //def form = Ok(html.transactions.form)
-  def update(id: UUID, content:Transaction) = TODO //
+  def withdraw(id: Any, code: String, secret: String) = Action { implicit r =>
+    implicit val transactionWrites = new Writes[Transaction] {
+      def writes(t: Transaction): JsValue = {
+        Json.obj(
+          "id"       -> JsString(t.id.toString),
+          "amount"   -> t.amount,
+          "receiver" -> JsString(t.receiver.name),
+          "sender"   -> JsString(t.sender.name),
+          "date"     -> JsString(t.deposit.date.toString)
+        )
+      }
+    }
+
+    val uuid: UUID = id match {
+      case k: UUID => k
+      case k: String => UUID.fromString(k)
+      case k => UUID.fromString(k.toString)
+    }
+
+    val withdrawalAttempt: Try[Transaction] = {
+      if(Transaction.validate(uuid, code, secret)) {
+        Try(Transaction.withdraw(uuid))
+      } else {
+        Try(throw new Exception("Transaction tokens not validated"))
+      }
+    }
+
+    if(withdrawalAttempt.isSuccess) {
+      Ok
+    } else {
+      Conflict
+    }
+  }
 
 }
