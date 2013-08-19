@@ -108,7 +108,7 @@ object Transactions extends Controller {
     }
 
     submitForm.bindFromRequest.fold(
-      formWithErrors => BadRequest //(html.transactions.testform(formWithErrors)),
+      formWithErrors => BadRequest, //(html.transactions.testform(formWithErrors)),
       validForm => {
         println("valid form is " + validForm)
         val t = Transaction.create(
