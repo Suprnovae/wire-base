@@ -2,17 +2,52 @@ package controllers
 
 import java.util.UUID
 import models._
+import org.apache.commons.lang3.StringUtils
 import play.api._
 import play.api.data._
 import play.api.data.Forms._
 import play.api.libs.json._
 import play.api.mvc._
+import play.api.Play.current
 import scala.util._
 import views._
 
 object Transactions extends Controller {
 
-  def index(code: String, secret: String, page: Int = 0, maxItems: Int = 100) = Action { implicit request =>
+  def SecureAction(f: Request[AnyContent] => Result): Action[AnyContent] = {
+    Action { request =>
+      println("this is dev? " + Play.isDev.toString)
+      println("this is test? " + Play.isTest.toString)
+      println("this is prod? " + Play.isProd.toString)
+      println(request.host)
+      println(request.uri)
+      println(request.headers)
+      println(request.headers.get("x-forwarded-proto").isDefined)
+      println(request.headers.get("x-forwarded-proto"))
+      val hdr = request.headers.get("x-forwarded-proto")
+      if(Play.isProd && (hdr.isDefined && StringUtils.contains(hdr.get, "https"))) {
+        request.headers.get("Authorization").flatMap { auth =>
+          auth.split(" ").drop(1).headOption.filter { encoded =>
+            new String(org.apache.commons.codec.binary.Base64.decodeBase64(encoded.getBytes)).split(":").toList match {
+              case u :: p :: Nil if u == "jim" && "smit" == p => true
+              case _ => false
+            }
+          }.map(_ => f(request))
+        }.getOrElse {
+          Unauthorized.withHeaders("WWW-Authenticate" -> """Basic realm="Secured"""")
+        }
+      } else {
+        // TODO: Redirect to SSL in Production
+        if(Play.isProd) {
+          Redirect("https://"+request.host+request.uri)
+        } else {
+          f(request)
+        }
+      }
+    }
+  }
+
+  def index(code: String, secret: String, page: Int = 0, maxItems: Int = 100) = SecureAction { implicit request =>
     implicit val transactionWrites = new Writes[Transaction] {
       def writes(t: Transaction): JsValue = {
         Json.obj(
