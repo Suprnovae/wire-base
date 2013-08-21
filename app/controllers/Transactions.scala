@@ -12,7 +12,26 @@ import views._
 
 object Transactions extends Controller {
 
-  def index(code: String, secret: String, page: Int = 0, maxItems: Int = 100) = Action { implicit request =>
+  def SecureAction(f: Request[AnyContent] => Result): Action[AnyContent] = {
+    Action { request =>
+      if(false) {
+        f(request)
+      } else {
+        request.headers.get("Authorization").flatMap { auth =>
+          auth.split(" ").drop(1).headOption.filter { encoded =>
+            new String(org.apache.commons.codec.binary.Base64.decodeBase64(encoded.getBytes)).split(":").toList match {
+              case u :: p :: Nil if u == "jim" && "smit" == p => true
+              case _ => false
+            }
+          }.map(_ => f(request))
+        }.getOrElse {
+          Unauthorized.withHeaders("WWW-Authenticate" -> """Basic realm="Secured"""")
+        }
+      }
+    }
+  }
+
+  def index(code: String, secret: String, page: Int = 0, maxItems: Int = 100) = SecureAction { implicit request =>
     implicit val transactionWrites = new Writes[Transaction] {
       def writes(t: Transaction): JsValue = {
         Json.obj(
