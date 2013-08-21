@@ -16,14 +16,6 @@ object Transactions extends Controller {
 
   def SecureAction(f: Request[AnyContent] => Result): Action[AnyContent] = {
     Action { request =>
-      println("this is dev? " + Play.isDev.toString)
-      println("this is test? " + Play.isTest.toString)
-      println("this is prod? " + Play.isProd.toString)
-      println(request.host)
-      println(request.uri)
-      println(request.headers)
-      println(request.headers.get("x-forwarded-proto").isDefined)
-      println(request.headers.get("x-forwarded-proto"))
       val hdr = request.headers.get("x-forwarded-proto")
       if(Play.isProd && (hdr.isDefined && StringUtils.contains(hdr.get, "https"))) {
         request.headers.get("Authorization").flatMap { auth =>
@@ -79,7 +71,7 @@ object Transactions extends Controller {
     }
   }
 
-  def getItem(id: Any) = Action { implicit request =>
+  def getItem(id: Any) = SecureAction { implicit request =>
     implicit val transactionWrites = new Writes[Transaction] {
       def writes(t: Transaction): JsValue = {
         Json.obj(
@@ -127,7 +119,7 @@ object Transactions extends Controller {
     )(TransactionForm.apply)(TransactionForm.unapply)
   )
 
-  def add = Action { implicit request =>
+  def add = SecureAction { implicit request =>
     implicit val transactionWrites = new Writes[Transaction] {
       def writes(t: Transaction): JsValue = {
         Json.obj(
@@ -145,7 +137,6 @@ object Transactions extends Controller {
     submitForm.bindFromRequest.fold(
       formWithErrors => BadRequest, //(html.transactions.testform(formWithErrors)),
       validForm => {
-        println("valid form is " + validForm)
         val t = Transaction.create(
           validForm.amount,
           Receiver(
@@ -180,7 +171,7 @@ object Transactions extends Controller {
   }
 
   //def form = Ok(html.transactions.form)
-  def withdraw(id: Any, code: String, secret: String) = Action { implicit r =>
+  def withdraw(id: Any, code: String, secret: String) = SecureAction { implicit r =>
     implicit val transactionWrites = new Writes[Transaction] {
       def writes(t: Transaction): JsValue = {
         Json.obj(
