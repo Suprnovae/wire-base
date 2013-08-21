@@ -2,12 +2,16 @@ package models
 
 import anorm._
 import anorm.SqlParser._
+import com.github.t3hnar.bcrypt._
 import java.util.{ Date, UUID }
+import play.api.db.DB
+import play.api.Play.current
 
 case class User(
   id: UUID,
   handle: String,
-  status: String
+  status: String,
+  secretHash: String
 )
 
 object User extends Model {
@@ -21,21 +25,49 @@ object User extends Model {
       User(
         id,
         handle,
-        status
+        status,
+        secret
       )
     }
   }
 
   def create(handle:String, password:String): Option[User] = {
-    None
+    DB.withConnection { implicit connection =>
+      val res = SQL("""
+        INSERT INTO users (
+          handle,
+          secret
+        ) values (
+          {handle},
+          {secret}
+        )"""
+      ).on(
+        'handle -> handle,
+        'secret -> (handle+password).bcrypt
+      ).executeInsert[List[User]](User.simple *)
+      println("result is + " + res.head.toString)
+      User.findById(res.head.id)
+    }
   }
 
-  def findAll: Seq[User] = List[User]()
+  def findAll: Seq[User] = {
+    DB.withConnection { implicit c =>
+      SQL("SELECT * FROM users").as(User.simple *)
+    }
+  }
   def findById(id: UUID): Option[User] = {
-    None
+    DB.withConnection { implicit c =>
+      SQL("SELECT * FROM users WHERE id = {id}").on(
+        'id -> id
+      ).as(User.simple.singleOpt)
+    }
   }
 
-  def validate(handle: String, password: String): Boolean = {
-    false
+  def validate(id: UUID, handle: String, password: String): Boolean = {
+    User.findById(id) match {
+      case Some(t) => if ((handle+password).isBcrypted(t.secretHash)) true else false
+      case None => false
+      case _ => false
+    }
   }
 }

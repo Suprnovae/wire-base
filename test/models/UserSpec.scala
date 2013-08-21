@@ -64,7 +64,15 @@ class UserSpec extends Specification {
       }
     }
     "be instantiable" in {
-      pending
+      val user = User (
+        UUID.randomUUID,
+        "kwame",
+        "UNKNOWN",
+        "some shit"
+      )
+      user.handle === "kwame"
+      user.status === "UNKNOWN"
+      user.secretHash === "some shit"
     }
     "be creatable with helper" in { 
       running(FakeApplication()) {
@@ -90,10 +98,10 @@ class UserSpec extends Specification {
         )
         p.isDefined === true
         p.get.handle === "Agent123"
-        User.validate("Agent123", "password1") === false
-        User.validate("Agent12", "password") === false
-        User.validate("Agent123 ", "password") === false
-        User.validate("Agent123", "password") === true
+        User.validate(p.get.id, "Agent123", "password1") === false
+        User.validate(p.get.id, "Agent12", "password") === false
+        User.validate(p.get.id, "Agent123 ", "password") === false
+        User.validate(p.get.id, "Agent123", "password") === true
       }
     }
   }
