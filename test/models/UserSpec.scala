@@ -101,16 +101,21 @@ class UserSpec extends Specification {
     // TODO: Test validation when token field in db contains a non bcrypt phrase, this currently throws an IllegalArgumentException
     "authenticates user by credentials" in {
       running(FakeApplication()) {
-        val p = User.create(
-          "Agent123",
-          "password"
-        )
+        val p = User.create("Agent123", "password")
         p.isSuccess === true
         p.get.handle === "Agent123"
         User.validate(p.get.id, "Agent123", "password1") === false
         User.validate(p.get.id, "Agent12", "password") === false
         User.validate(p.get.id, "Agent123 ", "password") === false
         User.validate(p.get.id, "Agent123", "password") === true
+      }
+    }
+    "finds a user by handle" in empty_set {
+      running(FakeApplication()) {
+        User.findByHandle("jesus").isEmpty === true
+        User.findByHandle("jesus") === None
+        User.create("jesus", "Yes I did!")
+        User.findByHandle("jesus").isEmpty === false
       }
     }
   }

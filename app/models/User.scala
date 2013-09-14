@@ -50,7 +50,7 @@ object User extends Model {
           println("result is + " + res.head.toString)
           User.findById(res.head.id).get
         }
-    );
+    )
   }
 
   def findAll: Seq[User] = {
@@ -62,6 +62,13 @@ object User extends Model {
     DB.withConnection { implicit c =>
       SQL("SELECT * FROM users WHERE id = {id}").on(
         'id -> id
+      ).as(User.simple.singleOpt)
+    }
+  }
+  def findByHandle(handle: String): Option[User] = {
+    DB.withConnection { implicit c =>
+      SQL("SELECT * FROM users WHERE handle = {handle}").on(
+        'handle -> handle
       ).as(User.simple.singleOpt)
     }
   }
