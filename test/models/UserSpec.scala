@@ -118,9 +118,11 @@ class UserSpec extends Specification {
         User.validate("Agent123", "password") === true
       }
     }
-    "authenticate hard-coded credentials if no other user exist" in {
+    "authenticate hard-coded credentials if no other user exist" in empty_set {
       running(FakeApplication()) {
-        todo
+        User.validate("wire", "wow!") === true
+        User.create("jack", "sparrow").isSuccess === true
+        User.validate("wire", "wow!") === true
       }
     }
   }
