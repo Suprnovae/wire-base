@@ -35,7 +35,7 @@ class UserSpec extends Specification {
   }
   val parser = { get[UUID]("id") }
   "User" should {
-    "be retrieved by id" in { 
+    "be retrievable by id" in { 
       running(FakeApplication()) {
         DB.withConnection { implicit connection =>
           def insert(handle: String, secret: String): List[UUID] = {
@@ -57,6 +57,14 @@ class UserSpec extends Specification {
         }
       }
       ok
+    }
+    "be retrievable by handle" in empty_set {
+      running(FakeApplication()) {
+        User.findByHandle("jesus").isEmpty === true
+        User.findByHandle("jesus") === None
+        User.create("jesus", "Yes I did!")
+        User.findByHandle("jesus").isEmpty === false
+      }
     }
     "be nothing upon fetching a non-existent UUID" in { 
       running(FakeApplication()) {
@@ -80,28 +88,41 @@ class UserSpec extends Specification {
           "cartman",
           "screw you guys"
         )
-        p.isDefined === true
+        p.isSuccess === true
         p.get.handle === "cartman"
       }
     }
-    "returns empty list when there are no users" in empty_set {
+    "fail when creating user with already existing handle" in {
+      running(FakeApplication()) {
+        User.create("naveen", "was lost!").isSuccess === true;
+        User.create("naveen", "still lost...").isSuccess === false;
+
+        User.create("vincent", "walt's dog!").isFailure === false;
+        User.create("vincent", "woof woof!!!").isFailure === true;
+      }
+    }
+    "return empty list when there are no users" in empty_set {
       running(FakeApplication()) {
         User.findAll.isEmpty === true
       }
     }
     // TODO: Test validation when token field in db contains a non bcrypt phrase, this currently throws an IllegalArgumentException
-    "authenticates user by credentials" in {
+    "authenticate user by credentials" in {
       running(FakeApplication()) {
-        val p = User.create(
-          "Agent123",
-          "password"
-        )
-        p.isDefined === true
+        val p = User.create("Agent123", "password")
+        p.isSuccess === true
         p.get.handle === "Agent123"
-        User.validate(p.get.id, "Agent123", "password1") === false
-        User.validate(p.get.id, "Agent12", "password") === false
-        User.validate(p.get.id, "Agent123 ", "password") === false
-        User.validate(p.get.id, "Agent123", "password") === true
+        User.validate("Agent123", "password1") === false
+        User.validate("Agent12", "password") === false
+        User.validate("Agent123 ", "password") === false
+        User.validate("Agent123", "password") === true
+      }
+    }
+    "authenticate hard-coded credentials if no other user exist" in empty_set {
+      running(FakeApplication()) {
+        User.validate("wire", "wow!") === true
+        User.create("jack", "sparrow").isSuccess === true
+        User.validate("wire", "wow!") === true
       }
     }
   }
