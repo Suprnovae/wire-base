@@ -104,10 +104,10 @@ class UserSpec extends Specification {
         val p = User.create("Agent123", "password")
         p.isSuccess === true
         p.get.handle === "Agent123"
-        User.validate(p.get.id, "Agent123", "password1") === false
-        User.validate(p.get.id, "Agent12", "password") === false
-        User.validate(p.get.id, "Agent123 ", "password") === false
-        User.validate(p.get.id, "Agent123", "password") === true
+        User.validate("Agent123", "password1") === false
+        User.validate("Agent12", "password") === false
+        User.validate("Agent123 ", "password") === false
+        User.validate("Agent123", "password") === true
       }
     }
     "finds a user by handle" in empty_set {
