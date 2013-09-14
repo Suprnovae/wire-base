@@ -17,7 +17,7 @@ class BaseController extends Controller {
   def SecureAction(f: Request[AnyContent] => Result): Action[AnyContent] = {
     Action { request =>
       val hdr = request.headers.get("x-forwarded-proto")
-      if(Play.isProd && (hdr.isDefined && StringUtils.contains(hdr.get, "https"))) {
+      if((Play.isProd && (hdr.isDefined && StringUtils.contains(hdr.get, "https"))) || Play.isDev) {
         request.headers.get("Authorization").flatMap { auth =>
           auth.split(" ").drop(1).headOption.filter { encoded =>
             new String(org.apache.commons.codec.binary.Base64.decodeBase64(encoded.getBytes)).split(":").toList match {
