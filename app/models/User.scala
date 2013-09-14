@@ -6,6 +6,7 @@ import com.github.t3hnar.bcrypt._
 import java.util.{ Date, UUID }
 import play.api.db.DB
 import play.api.Play.current
+import scala.util.Try;
 
 case class User(
   id: UUID,
@@ -31,23 +32,25 @@ object User extends Model {
     }
   }
 
-  def create(handle:String, password:String): Option[User] = {
-    DB.withConnection { implicit connection =>
-      val res = SQL("""
-        INSERT INTO users (
-          handle,
-          secret
-        ) values (
-          {handle},
-          {secret}
-        )"""
-      ).on(
-        'handle -> handle,
-        'secret -> (handle+password).bcrypt
-      ).executeInsert[List[User]](User.simple *)
-      println("result is + " + res.head.toString)
-      User.findById(res.head.id)
-    }
+  def create(handle:String, password:String): Try[User] = {
+    Try(
+        DB.withConnection { implicit connection =>
+          val res = SQL("""
+            INSERT INTO users (
+              handle,
+              secret
+            ) values (
+              {handle},
+              {secret}
+            )"""
+          ).on(
+            'handle -> handle,
+            'secret -> (handle+password).bcrypt
+          ).executeInsert[List[User]](User.simple *)
+          println("result is + " + res.head.toString)
+          User.findById(res.head.id).get
+        }
+    );
   }
 
   def findAll: Seq[User] = {

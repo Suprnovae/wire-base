@@ -80,8 +80,17 @@ class UserSpec extends Specification {
           "cartman",
           "screw you guys"
         )
-        p.isDefined === true
+        p.isSuccess === true
         p.get.handle === "cartman"
+      }
+    }
+    "fail when creating user with already existing handle" in {
+      running(FakeApplication()) {
+        User.create("naveen", "was lost!").isSuccess === true;
+        User.create("naveen", "still lost...").isSuccess === false;
+
+        User.create("vincent", "walt's dog!").isFailure === false;
+        User.create("vincent", "woof woof!!!").isFailure === true;
       }
     }
     "returns empty list when there are no users" in empty_set {
@@ -96,7 +105,7 @@ class UserSpec extends Specification {
           "Agent123",
           "password"
         )
-        p.isDefined === true
+        p.isSuccess === true
         p.get.handle === "Agent123"
         User.validate(p.get.id, "Agent123", "password1") === false
         User.validate(p.get.id, "Agent12", "password") === false
