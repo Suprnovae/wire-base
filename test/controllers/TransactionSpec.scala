@@ -206,5 +206,8 @@ class TransactionSpec extends Specification {
       }
     }
 
+    "requires authentication before manipulating the object set" in {
+      todo
+    }
   }
 }
