@@ -14,8 +14,6 @@ abstract class Event
 
 case class Deposit(date: Date) extends Event
 
-case class Withdrawal(date: Date) extends Event
-
 case class Receiver(
   name: String,
   phonenumber: String,
@@ -78,7 +76,7 @@ object Transaction extends Model {
         Receiver(rn, rp, rc),
         Sender(sn, sp, sl, sc, sa, None, se),
         Deposit(td), //td
-        if (tw.isDefined) Some(Withdrawal(tw.get)) else None,
+        Withdrawal.findByTransactionId(id),
         t,
         c
       )
