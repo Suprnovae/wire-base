@@ -5,6 +5,7 @@ import anorm.SqlParser._
 
 import org.specs2.mutable._
 
+import java.awt.Point
 import java.util.{ Date, UUID }
 
 import models._
@@ -116,7 +117,7 @@ class TransactionSpec extends Specification {
         t.get.receiver.country === "US"
       }
     }
-    "be withdrawable" in {
+    "be withdrawable" in empty_set {
       running(FakeApplication()) {
         val t = Transaction.create(
           400,
@@ -127,18 +128,30 @@ class TransactionSpec extends Specification {
         t.isDefined === true
         val id = t.get.id
         Transaction.findById(id).get.withdrawal.isDefined === false
-        val wt = Transaction.withdraw(id)
+        val p = CashPoint.create(
+          "US_NYC_MANH_WALLSTR_0012",
+          Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
+          Some("The ATM near the NYSE at 11 Wall Street")
+        )
+        p.isDefined === true
+        val wt = Transaction.withdraw(id, p.get)
         wt.withdrawal.isDefined === true
         wt.withdrawal.get.date.after(wt.deposit.date) === true
       }
     }
-    "fail withdraw with invalid UUID" in {
+    "fail withdraw with invalid UUID" in empty_set {
       running(FakeApplication()) {
-        Transaction.withdraw(new UUID(0, 0)) must throwA[NoSuchElementException]
-        Try(Transaction.withdraw(new UUID(0, 0))).isSuccess === false
+        val p = CashPoint.create(
+          "US_NYC_MANH_WALLSTR_0012",
+          Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
+          Some("The ATM near the NYSE at 11 Wall Street")
+        )
+        p.isDefined === true
+        Transaction.withdraw(new UUID(0, 0), p.get) must throwA[NoSuchElementException]
+        Try(Transaction.withdraw(new UUID(0, 0), p.get)).isSuccess === false
       }
     }
-    "fail withdraw on already withdrawn transaction" in {
+    "fail withdraw on already withdrawn transaction" in empty_set {
       running(FakeApplication()) {
         val t = Transaction.create(
           2290,
@@ -147,8 +160,14 @@ class TransactionSpec extends Specification {
           "boondocks"
         )
         t.isDefined === true
-        val wd = Transaction.withdraw(t.get.id).withdrawal.get.date
-        Transaction.withdraw(t.get.id) must throwA[AlreadyWithdrawnException]
+        val p = CashPoint.create(
+          "US_NYC_MANH_WALLSTR_0012",
+          Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
+          Some("The ATM near the NYSE at 11 Wall Street")
+        )
+        p.isDefined === true
+        val wd = Transaction.withdraw(t.get.id, p.get).withdrawal.get.date
+        Transaction.withdraw(t.get.id, p.get) must throwA[AlreadyWithdrawnException]
         Transaction.findById(t.get.id).get.withdrawal.get.date === wd
       }
     }
@@ -184,7 +203,7 @@ class TransactionSpec extends Specification {
         Transaction.validate(t.get.id, "12345678", secret) === false
       }
     }
-    "finds a transaction by given tokens" in { 
+    "finds a transaction by given tokens" in empty_set { 
       running(FakeApplication()) {
         val secret = "Aha Aha! G'Yuk!"
         val t = Transaction.create(
@@ -204,7 +223,13 @@ class TransactionSpec extends Specification {
         Transaction.findByTokens(code, "Nonsense! Aha!").isDefined === false
         Transaction.findByTokens("12345567", secret).isDefined === false
 
-        Try(Transaction.withdraw(t.get.id)).isSuccess === true
+        val p = CashPoint.create(
+          "US_NYC_MANH_WALLSTR_0012",
+          Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
+          Some("The ATM near the NYSE at 11 Wall Street")
+        )
+        p.isDefined === true
+        Try(Transaction.withdraw(t.get.id, p.get)).isSuccess === true
         Transaction.findByTokens(code, secret).isDefined === false
       }
     }
@@ -317,7 +342,9 @@ class TransactionSpec extends Specification {
     def before {
       running(FakeApplication()) {
         DB.withConnection { implicit c =>
+          SQL("""DELETE FROM withdrawals""").executeUpdate()
           SQL("""DELETE FROM transactions""").executeUpdate()
+          SQL("""DELETE FROM cash_points""").executeUpdate()
         }
       }
     }

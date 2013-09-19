@@ -15,7 +15,11 @@ class TransactionSpec extends Specification {
 
     "render the result as json upon request" in {
       running(FakeApplication()) {
-        val headers = FakeHeaders(Seq("ACCEPT" -> Seq("application/json")))
+        println(new String(org.apache.commons.codec.binary.Base64.encodeBase64("username:password".getBytes)));
+        val headers = FakeHeaders(Seq(
+          "ACCEPT" -> Seq("application/json"),
+          "AUTHORIZATION" -> Seq("Basic " + "wire:wow!")
+        ))
         val request = FakeRequest(GET, "/transactions", headers, "")
         val page = route(request).get
         status(page) must equalTo(OK)
@@ -206,5 +210,8 @@ class TransactionSpec extends Specification {
       }
     }
 
+    "requires authentication before manipulating the object set" in {
+      todo
+    }
   }
 }

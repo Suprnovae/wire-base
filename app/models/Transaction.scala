@@ -138,12 +138,14 @@ object Transaction extends Model {
       case None    => false
     }
   }
-  def withdraw(id: UUID): Transaction = {
+  def withdraw(id: UUID, cash_point: CashPoint): Transaction = {
     DB.withConnection { implicit c => 
       val count = SQL("""
         UPDATE transactions
-        SET withdrawn_at = CURRENT_TIMESTAMP
-        WHERE id = {id} AND withdrawn_at IS NULL""").on('id -> id).executeUpdate()
+        SET withdrawn_at = CURRENT_TIMESTAMP, withdrawn_by = {cash_point}
+        WHERE id = {id} AND withdrawn_at IS NULL""")
+        .on('id -> id, 'cash_point -> cash_point.id)
+        .executeUpdate()
       val bogey = Transaction.findById(id)
       if((count==0) && (bogey != None)) throw new AlreadyWithdrawnException()
       bogey.get
