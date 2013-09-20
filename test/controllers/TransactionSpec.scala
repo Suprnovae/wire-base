@@ -210,8 +210,10 @@ class TransactionSpec extends Specification {
       }
     }
 
-    "requires authentication before manipulating the object set" in {
-      todo
-    }
+    "require authentication before manipulating the object set" in { todo }
+    // Withdrawals... move this test to withdrawals
+
+    "be accessible to wire admins only" in { todo }
+
   }
 }
