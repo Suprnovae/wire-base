@@ -1,0 +1,68 @@
+  <div class="modal fade" id="new" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form class="form-horizontal" role="form" method="post" action="@routes.Transactions.add">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h2 class="modal-title">Create new cashpoint</h2>
+          </div>
+          <div class="modal-body">
+            <fieldset>
+              <legend>Details</legend>
+              <div class="form-group">
+                <label for="serial">Serial</label>
+                <input type="text" class="form-control" id="serial" name="serial" placeholder="">
+              </div>
+              <div class="form-group">
+                <label for="note">Note</label>
+                <input type="text" class="form-control" id="note" name="note" placeholder="">
+              </div>
+            </fieldset>
+              <div class="checkbox">
+                <label for="active">
+                  <input type="checkbox" id="active" name="active" placeholder="">
+                  Cashpoint is currently active
+                </label>
+              </div>
+            <fieldset>
+              <legend>Location</legend>
+              <div class="form-group">
+                <label for="address">Address</label>
+                <input type="text" class="form-control" id="address" name="address" placeholder="">
+              </div>
+              <div class="form-group">
+                <label for="city">City</label>
+                <input type="text" class="form-control" id="city" name="city" placeholder="">
+              </div>
+              <div class="form-group">
+                <label for="city">Coordinates</label>
+                <div class="row">
+                  <div class="col-lg-6">
+                    <input type="text" class="form-control" id="longitude" name="longitude" placeholder="longitude">
+                  </div>
+                  <div class="col-lg-6">
+                    <input type="text" class="form-control" id="latitude" name="latitude" placeholder="latitude">
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="country">Country</label>
+                <select id="country" name="country" class="form-control">
+                  <option value="MA">Marocco</option>
+                  <option value="SR">Suriname</option>
+                  <option value="NL">The Netherlands</option>
+                  <option value="US">United States</option>
+                  <option value="ZW">Zimbabwe</option>
+                </select>
+              </div>
+            </fieldset>
+      
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
