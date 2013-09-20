@@ -14,14 +14,11 @@ import views._
 
 object CashPoints extends BaseController {
   def getItem(id: Any) = SecureAction { implicit request =>
-    implicit val transactionWrites = new Writes[Transaction] {
-      def writes(t: Transaction): JsValue = {
+    implicit val cashpointWrites = new Writes[CashPoint] {
+      def writes(t: CashPoint): JsValue = {
         Json.obj(
           "id"       -> JsString(t.id.toString),
-          "amount"   -> t.amount,
-          "receiver" -> JsString(t.receiver.name),
-          "sender"   -> JsString(t.sender.name),
-          "date"     -> JsString(t.deposit.date.toString)
+          "active"   -> JsBoolean(t.active)
         )
       }
     }

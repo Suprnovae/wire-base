@@ -17,6 +17,17 @@ case class Location(
   country: String
 )
 
+case class CashPointForm(
+  serial: String,
+  active: Boolean,
+  note: String,
+  address: String,
+  city: String,
+  country: String,
+  latitude: String,
+  longitude: String
+)
+
 case class CashPoint(
   id: UUID,
   location: Location,
@@ -27,7 +38,7 @@ case class CashPoint(
 )
 
 object CashPoint extends Model {
-  val simple = {
+  val complete = {
     get[UUID]("cash_points.id")~
     get[Point]("cash_points.location")~
     get[String]("cash_points.address")~
@@ -49,6 +60,7 @@ object CashPoint extends Model {
       )
     }
   }
+  val simple = complete
 
   def create(
     serial: String, 
@@ -104,6 +116,12 @@ object CashPoint extends Model {
     }
   }
 
+  def count: Long = {
+    DB.withConnection { implicit c =>
+      SQL("""SELECT COUNT(*) AS c FROM cash_points""")
+        .apply().head[Long]("c")
+    }
+  }
   //def findNear(location: Point): Seq[CashPoint] = { }
 
   def validate(id: UUID, secret: String): Boolean = {
