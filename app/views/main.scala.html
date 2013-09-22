@@ -22,7 +22,7 @@
       <div class="collapse navbar-collapse menu-sections">
         <ul class="nav navbar-nav">
           <li @if(title == "Transactions") { class="active" }><a href="@routes.Transactions.index()">Transactions</a></li>
-          <li><a href="#">Cashpoints</a></li>
+          <li @if(title == "CashPoints") { class="active" }><a href="@routes.CashPoints.index()">Cashpoints</a></li>
           <li><a href="#">Users</a></li>
         </ul>
       </div>
