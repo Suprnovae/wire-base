@@ -15,10 +15,8 @@ class TransactionSpec extends Specification {
 
     "render the result as json upon request" in {
       running(FakeApplication()) {
-        println(new String(org.apache.commons.codec.binary.Base64.encodeBase64("username:password".getBytes)));
         val headers = FakeHeaders(Seq(
-          "ACCEPT" -> Seq("application/json"),
-          "AUTHORIZATION" -> Seq("Basic " + "wire:wow!")
+          "ACCEPT" -> Seq("application/json")
         ))
         val request = FakeRequest(GET, "/transactions", headers, "")
         val page = route(request).get
