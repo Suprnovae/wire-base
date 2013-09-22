@@ -18,7 +18,6 @@ object CashPoints extends BaseController {
   val submitForm = Form(
     mapping(
       "serial" -> nonEmptyText,
-      "active" -> boolean,
       "note"   -> nonEmptyText,
       "address" -> nonEmptyText,
       "city" -> nonEmptyText,
@@ -33,7 +32,7 @@ object CashPoints extends BaseController {
       def writes(t: CashPoint): JsValue = {
         Json.obj(
           "id"       -> JsString(t.id.toString),
-          "active"   -> JsBoolean(t.active)
+          "serial"   -> JsString(t.serial)
         )
       }
     }
@@ -56,8 +55,7 @@ object CashPoints extends BaseController {
             "city"      -> JsString(p.location.city),
             "country"   -> JsString(p.location.country)
           ),
-          "note"     -> JsString(p.note.get),
-          "active"   -> JsBoolean(p.active)
+          "note"     -> JsString(p.note.get)
         )
       }
     }
@@ -94,7 +92,7 @@ object CashPoints extends BaseController {
       def writes(t: CashPoint): JsValue = {
         Json.obj(
           "id"       -> JsString(t.id.toString),
-          "active"   -> JsBoolean(t.active)
+          "serial"   -> JsString(t.serial)
         )
       }
     }

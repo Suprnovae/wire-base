@@ -65,7 +65,6 @@ class CashPointSpec extends Specification {
       val url = "/cashpoints"
       val params = Map(
         "serial"    -> "MA_RA_ATLAS",
-        "active"    -> "false",
         "note"      -> "Mobile pickup exchange boot",
         "address"   -> "21 Avenue Al Atlas",
         "city"      -> "Rabat",

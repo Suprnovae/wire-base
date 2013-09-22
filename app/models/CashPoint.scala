@@ -19,7 +19,6 @@ case class Location(
 
 case class CashPointForm(
   serial: String,
-  active: Boolean,
   note: String,
   address: String,
   city: String,
