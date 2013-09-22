@@ -4,6 +4,7 @@ import anorm._
 import java.awt.Point
 import java.util.UUID
 import models._
+import controllers.CashPoints
 import org.specs2.mutable._
 import play.api.data._
 import play.api.data.Forms._
@@ -15,8 +16,25 @@ import play.api.test.Helpers._
 
 class CashPointSpec extends Specification {
   "/cashpoints" should {
-    "render the result as json upon request" in { todo }
-    "render the index page" in { todo }
+    "render the result as json upon request" in {
+      running(FakeApplication()) {
+        val headers = FakeHeaders(Seq(
+          "ACCEPT" -> Seq("application/json")
+        ))
+        val request = FakeRequest(GET, "/cashpoints", headers, "")
+        val page = route(request).get
+        status(page) must equalTo(OK)
+        contentType(page) must beSome.which(_ == "application/json")
+      }
+    }
+
+    "render the index page" in {
+      running(FakeApplication()) {
+        val page = route(FakeRequest(GET, "/cashpoints")).get
+        status(page) must equalTo(OK)
+        contentType(page) must beSome.which(_ == "text/html")
+      }
+    }
     "send 404 on requesting details with non-existent id" in { todo }
     "returns the resource" in empty_set {
       running(FakeApplication()) {
@@ -46,7 +64,7 @@ class CashPointSpec extends Specification {
       val count = CashPoint.count
       val url = "/cashpoints"
       val params = Map(
-        "serial"    -> "",
+        "serial"    -> "MA_RA_ATLAS",
         "active"    -> "false",
         "note"      -> "Mobile pickup exchange boot",
         "address"   -> "21 Avenue Al Atlas",
@@ -55,18 +73,9 @@ class CashPointSpec extends Specification {
         "latitude"  -> "33.99652",
         "longitude" -> "-6.84668"
       )
-      val form = Form(
-        mapping(
-          "serial"    -> nonEmptyText,
-          "active"    -> boolean,
-          "note"      -> nonEmptyText,
-          "address"   -> nonEmptyText,
-          "city"      -> nonEmptyText,
-          "country"   -> nonEmptyText,
-          "latitude"  -> nonEmptyText,
-          "longitude" -> nonEmptyText
-        )(CashPointForm.apply)(CashPointForm.unapply)
-      )
+
+      // TODO: Don't redefine forms in tests, call submitForm from controllers
+      val form = CashPoints.submitForm
   
       form.bind(params).hasErrors must beFalse
       form.errors.size must equalTo(0)
@@ -76,7 +85,7 @@ class CashPointSpec extends Specification {
       ).get
   
       status(page) must equalTo(CREATED)
-      Transaction.count === count+1
+      CashPoint.count === count+1
     }
   }
 
