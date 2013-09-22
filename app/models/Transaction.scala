@@ -148,6 +148,7 @@ object Transaction extends Model {
         .executeUpdate()
       val bogey = Transaction.findById(id)
       if((count==0) && (bogey != None)) throw new AlreadyWithdrawnException()
+      // FIX: What happens if a non-existent id is withdrawn as we're not returning Options
       bogey.get
     }
   }

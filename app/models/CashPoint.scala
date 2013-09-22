@@ -129,4 +129,16 @@ object CashPoint extends Model {
       case None    => false
     }
   }
+
+  def modify(id: UUID, active: Boolean, note: String = null, location: Location = null): Option[CashPoint] = {
+    DB.withConnection { implicit c =>
+      val count = SQL("""
+        UPDATE cash_points
+        SET active = {active}
+        WHERE id = {id} """)
+        .on('id -> id, 'active -> active)
+        .executeUpdate()
+      return CashPoint.findById(id)
+    }
+  }
 }
