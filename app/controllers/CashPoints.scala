@@ -115,6 +115,11 @@ object CashPoints extends BaseController {
     }
   }
 
+  def modify(id: Any, active: Boolean) = SecureAction { implicit request =>
+    println(active)
+    Conflict
+  }
+
   def history(id: Any) = SecureAction { implicit request =>
     // TODO: does user have clearance
     println(request.headers)

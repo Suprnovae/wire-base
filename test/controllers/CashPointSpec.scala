@@ -2,6 +2,7 @@ package test.controllers
 
 import anorm._
 import java.awt.Point
+import java.awt.geom.Point2D
 import java.util.UUID
 import models._
 import controllers.CashPoints
@@ -40,8 +41,13 @@ class CashPointSpec extends Specification {
       running(FakeApplication()) {
         val p = CashPoint.create(
           "US_NYC_MANH_WALLSTR_0012",
-          Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
-          Some("The ATM near the NYSE at 11 Wall Street")
+          Location(
+            new Point2D.Double(40.70732, -74.01098), 
+            "12 Wall Street", 
+            "New York City", 
+            "US"
+          ),
+          Some("The ATM near the NYSE at 12 Wall Street")
         )
   
         p.isDefined === true
@@ -58,35 +64,62 @@ class CashPointSpec extends Specification {
         contentType(page) must beSome.which(_ == "application/json")
       }
     }
-
-  "create a new resource" in {
-    running(FakeApplication()) {
-      val count = CashPoint.count
-      val url = "/cashpoints"
-      val params = Map(
-        "serial"    -> "MA_RA_ATLAS",
-        "note"      -> "Mobile pickup booth",
-        "address"   -> "21 Avenue Al Atlas",
-        "city"      -> "Rabat",
-        "country"   -> "MA",
-        "latitude"  -> "33.99652",
-        "longitude" -> "-6.84668"
-      )
-
-      // TODO: Don't redefine forms in tests, call submitForm from controllers
-      val form = CashPoints.submitForm
   
-      form.bind(params).hasErrors must beFalse
-      form.errors.size must equalTo(0)
+    "create a new resource" in {
+      running(FakeApplication()) {
+        val count = CashPoint.count
+        val url = "/cashpoints"
+        val params = Map(
+          "serial"    -> "MA_RA_ATLAS",
+          "note"      -> "Mobile pickup booth",
+          "address"   -> "21 Avenue Al Atlas",
+          "city"      -> "Rabat",
+          "country"   -> "MA",
+          "latitude"  -> "33.99652",
+          "longitude" -> "-6.84668"
+        )
   
-      val page = route(FakeRequest(POST, url)
-        .withFormUrlEncodedBody(params.toList: _*)
-      ).get
-  
-      status(page) must equalTo(CREATED)
-      CashPoint.count === count+1
+        // TODO: Don't redefine forms in tests, call submitForm from controllers
+        val form = CashPoints.submitForm
+    
+        form.bind(params).hasErrors must beFalse
+        form.errors.size must equalTo(0)
+    
+        val page = route(FakeRequest(POST, url)
+          .withFormUrlEncodedBody(params.toList: _*)
+        ).get
+    
+        status(page) must equalTo(CREATED)
+        CashPoint.count === count+1
+      }
     }
-  }
+
+    "changes the status of a cashpoint" in empty_set {
+      running(FakeApplication()) {
+        val p = CashPoint.create(
+          "NL_RDAM_WKKADE_001",
+          Location(
+            new Point2D.Double(51.92028, 4.46963),
+            "West-Kruiskade 35", "Rotterdam", "NL"
+          ),
+          Some("The ATM beside the store at the West-Kruiskade")
+        )
+        val url = "/cashpoints/" + p.get.id.toString
+
+        status(route(FakeRequest(PUT, url)).get) must equalTo(CONFLICT)
+        CashPoint.findById(p.get.id).get.active === false
+
+        status(route(FakeRequest(
+          PUT, url + "?active=true"
+        )).get) must equalTo(OK)
+        CashPoint.findById(p.get.id).get.active === true
+
+        status(route(FakeRequest(
+          PUT, url + "?active=false"
+        )).get) must equalTo(OK)
+        CashPoint.findById(p.get.id).get.active === false
+      }
+    }
 
     "be mutable by cashpoint admins only" in { todo }
     "should only present overview to cashpoint admins" in { todo }

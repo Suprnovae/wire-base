@@ -17,3 +17,4 @@ GET     /cashpoints                 controllers.CashPoints.index
 POST    /cashpoints                 controllers.CashPoints.add
 GET     /cashpoints/:id             controllers.CashPoints.getItem(id: String)
 GET     /cashpoints/:id/overview    controllers.CashPoints.history(id: String)
+PUT     /cashpoints/:id             controllers.CashPoints.modify(id: String, active: Boolean ?= false)
