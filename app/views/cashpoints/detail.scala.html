@@ -1,0 +1,38 @@
+@(cashpoint: CashPoint)
+
+@main("CashPoint " + cashpoint.location.address){
+  <div class="panel" style="margin: 0 10px 10px 10px;">
+    <div class="panel-heading"><h1>Location</h1></div>
+    <ul class="list-group">
+      <li class="list-group-item">
+      <!--<h2 class="list-group-item-heading">Address</h2>-->
+        <p class="list-group-item-text">@cashpoint.location.address</p>
+      </li>
+      <li class="list-group-item">
+      <!--<h2 class="list-group-item-heading">City</h2>-->
+        <p class="list-group-item-text">@cashpoint.location.city</p>
+      </li>
+      <li class="list-group-item">
+      <!--<h2 class="list-group-item-heading">Details</h2>-->
+        <p class="list-group-item-text">@cashpoint.location.country</p>
+      </li>
+    </ul>
+  </div>
+  <div class="panel" style="margin: 0 10px 10px 10px;">
+    <div class="panel-heading"><h1>Details</h1></div>
+    <ul class="list-group">
+      <li class="list-group-item">
+      <!--<h2 class="list-group-item-heading">Serial</h2>-->
+        <p class="list-group-item-text">@cashpoint.serial</p>
+      </li>
+      <li class="list-group-item">
+      <!--<h2 class="list-group-item-heading">Note</h2>-->
+        <p class="list-group-item-text">@cashpoint.note</p>
+      </li>
+      <li class="list-group-item">
+      <!--<h2 class="list-group-item-heading">State</h2>-->
+        <p class="list-group-item-text">@if(cashpoint.active){active}else{inactive}</p>
+      </li>
+    </ul>
+  </div>
+}

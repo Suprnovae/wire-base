@@ -3,6 +3,7 @@ package models
 import anorm._
 import anorm.SqlParser._
 
+import java.awt.geom.Point2D
 import java.awt.Point
 import java.sql.Timestamp
 import java.util.{ Date, UUID }
@@ -51,6 +52,20 @@ trait Extractable {
         }
         case point: Point   => Right(new Point(point))
         case _              => Right(new Point(0, 0))
+      }
+    }
+  }
+
+  implicit def rowToPoint2D: Column[Point2D] = {
+    Column.nonNull[Point2D] { (value, meta) =>
+      value match {
+        case point: PGpoint => {
+          Right(new Point2D.Double(point.x, point.y))
+        }
+        case point: Point => {
+          Right(new Point2D.Double(point.x.toDouble, point.y.toDouble))
+        }
+        case _ => Right(new Point2D.Double(0, 0))
       }
     }
   }

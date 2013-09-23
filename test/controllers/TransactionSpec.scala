@@ -10,13 +10,8 @@ import play.api.mvc._
 import play.api.test._
 import play.api.test.Helpers._
 
-class TransactionSpec extends Specification {
-  
+class TransactionSpec extends BaseSpecification {
   "/transactions" should {
-    val base64token = new String(Base64.encodeBase64("wire:wow!".getBytes))
-    val headers = FakeHeaders(Seq(
-      "AUTHORIZATION" -> Seq("Basic " + base64token)
-    ))
 
     "render the result as json upon request" in {
       running(FakeApplication()) {
@@ -245,5 +240,10 @@ class TransactionSpec extends Specification {
         Transaction.findById(t.get.id).get.withdrawal must equalTo(old_withdrawal)
       }
     }
+
+    "require authentication before manipulating the object set" in { todo }
+    // Withdrawals... move this test to withdrawals
+
+    "be accessible to wire admins only" in { todo }
   }
 }
