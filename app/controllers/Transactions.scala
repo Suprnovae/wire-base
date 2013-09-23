@@ -145,7 +145,7 @@ object Transactions extends BaseController {
   }
 
   //def form = Ok(html.transactions.form)
-  def withdraw(id: Any, code: String, secret: String) = SecureAction { implicit r =>
+  def withdraw(id: Any, code: String, secret: String, cash_point: Any) = SecureAction { implicit r =>
     implicit val transactionWrites = new Writes[Transaction] {
       def writes(t: Transaction): JsValue = {
         Json.obj(
@@ -163,10 +163,15 @@ object Transactions extends BaseController {
       case k: String => UUID.fromString(k)
       case k => UUID.fromString(k.toString)
     }
+    val point: Option[CashPoint] = cash_point match {
+      case k: UUID => CashPoint.findById(k)
+      case k: String => CashPoint.findById(UUID.fromString(k))
+      case k => CashPoint.findById(UUID.fromString(k.toString))
+    }
 
-    val withdrawalAttempt: Try[Transaction] = {
+    val withdrawalAttempt: Try[Withdrawal] = {
       if(Transaction.validate(uuid, code, secret)) {
-        Try(Transaction.withdraw(uuid))
+        Try(Withdrawal.create(Transaction.findById(uuid).get, point.get).get)
       } else {
         Try(throw new Exception("Transaction tokens not validated"))
       }

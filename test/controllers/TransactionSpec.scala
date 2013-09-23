@@ -15,7 +15,9 @@ class TransactionSpec extends Specification {
 
     "render the result as json upon request" in {
       running(FakeApplication()) {
-        val headers = FakeHeaders(Seq("ACCEPT" -> Seq("application/json")))
+        val headers = FakeHeaders(Seq(
+          "ACCEPT" -> Seq("application/json")
+        ))
         val request = FakeRequest(GET, "/transactions", headers, "")
         val page = route(request).get
         status(page) must equalTo(OK)
@@ -205,6 +207,11 @@ class TransactionSpec extends Specification {
         Transaction.findById(t.get.id).get.withdrawal must equalTo(old_withdrawal)
       }
     }
+
+    "require authentication before manipulating the object set" in { todo }
+    // Withdrawals... move this test to withdrawals
+
+    "be accessible to wire admins only" in { todo }
 
   }
 }

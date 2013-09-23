@@ -5,6 +5,7 @@ import anorm.SqlParser._
 
 import org.specs2.mutable._
 
+import java.awt.Point
 import java.util.{ Date, UUID }
 
 import models._
@@ -17,13 +18,6 @@ import play.api.test.Helpers._
 import scala.util.{ Random, Try }
 
 class TransactionSpec extends Specification {
-  step {
-    running(FakeApplication()) {
-      DB.withConnection { implicit c =>
-        SQL("""DELETE FROM transactions""").executeUpdate()
-      }
-    }
-  }
   implicit def rowToUUID: Column[UUID] = {
     Column.nonNull[UUID] { (value, meta) =>
       value match {
@@ -116,42 +110,6 @@ class TransactionSpec extends Specification {
         t.get.receiver.country === "US"
       }
     }
-    "be withdrawable" in {
-      running(FakeApplication()) {
-        val t = Transaction.create(
-          400,
-          Receiver("Christopher Wallace", "1238293842", "US"),
-          Sender("Ella Fitzgerald", "2838384848", "US", "Atlanta", "Bourgeoisie Lane", None, "ella@example.com"),
-          "boondocks"
-        )
-        t.isDefined === true
-        val id = t.get.id
-        Transaction.findById(id).get.withdrawal.isDefined === false
-        val wt = Transaction.withdraw(id)
-        wt.withdrawal.isDefined === true
-        wt.withdrawal.get.date.after(wt.deposit.date) === true
-      }
-    }
-    "fail withdraw with invalid UUID" in {
-      running(FakeApplication()) {
-        Transaction.withdraw(new UUID(0, 0)) must throwA[NoSuchElementException]
-        Try(Transaction.withdraw(new UUID(0, 0))).isSuccess === false
-      }
-    }
-    "fail withdraw on already withdrawn transaction" in {
-      running(FakeApplication()) {
-        val t = Transaction.create(
-          2290,
-          Receiver("Huey Freeman", "10921923", "US"),
-          Sender("Riley Freeman", "1290192031", "US", "Atlanta", "Bourgeoisie Lane", None, "ella@example.com"),
-          "boondocks"
-        )
-        t.isDefined === true
-        val wd = Transaction.withdraw(t.get.id).withdrawal.get.date
-        Transaction.withdraw(t.get.id) must throwA[AlreadyWithdrawnException]
-        Transaction.findById(t.get.id).get.withdrawal.get.date === wd
-      }
-    }
     "returns empty list when there are no transaction entries" in empty_set {
       running(FakeApplication()) {
         Transaction.findAll.isEmpty === true
@@ -184,7 +142,7 @@ class TransactionSpec extends Specification {
         Transaction.validate(t.get.id, "12345678", secret) === false
       }
     }
-    "finds a transaction by given tokens" in { 
+    "finds a transaction by given tokens" in empty_set { 
       running(FakeApplication()) {
         val secret = "Aha Aha! G'Yuk!"
         val t = Transaction.create(
@@ -204,7 +162,13 @@ class TransactionSpec extends Specification {
         Transaction.findByTokens(code, "Nonsense! Aha!").isDefined === false
         Transaction.findByTokens("12345567", secret).isDefined === false
 
-        Try(Transaction.withdraw(t.get.id)).isSuccess === true
+        val p = CashPoint.create(
+          "US_NYC_MANH_WALLSTR_0012",
+          Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
+          Some("The ATM near the NYSE at 11 Wall Street")
+        )
+        p.isDefined === true
+        Try(Withdrawal.create(t.get, p.get).get).isSuccess === true
         Transaction.findByTokens(code, secret).isDefined === false
       }
     }
@@ -317,7 +281,9 @@ class TransactionSpec extends Specification {
     def before {
       running(FakeApplication()) {
         DB.withConnection { implicit c =>
-          SQL("""DELETE FROM transactions""").executeUpdate()
+          SQL("""DELETE FROM withdrawals CASCADE""").executeUpdate()
+          SQL("""DELETE FROM transactions CASCADE""").executeUpdate()
+          SQL("""DELETE FROM cash_points CASCADE""").executeUpdate()
         }
       }
     }

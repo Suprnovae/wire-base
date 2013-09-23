@@ -79,7 +79,7 @@ class CashPointSpec extends Specification {
       iut.location.country === "US"
       iut.note             === None
     }
-    "be creatable with helper" in { 
+    "be creatable with helper" in empty_set { 
       running(FakeApplication()) {
         val p = CashPoint.create(
           "US_NYC_MANH_WALLSTR_0012",
@@ -89,6 +89,24 @@ class CashPointSpec extends Specification {
         p.isDefined === true
         p.get.serial === "US_NYC_MANH_WALLSTR_0012"
         p.get.location.country === "US"
+      }
+    }
+    "be activatable" in empty_set {
+      running(FakeApplication()) {
+        val p = CashPoint.create(
+          "US_NYC_MANH_WALLSTR_0012",
+          Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
+          Some("The ATM near the NYSE at 11 Wall Street")
+        )
+        p.isDefined === true
+        p.get.active === false
+        val a = CashPoint.modify(p.get.id, true)
+        a.isDefined === true
+        a.get.active === true
+
+        val b = CashPoint.modify(p.get.id, false)
+        b.isDefined === true
+        b.get.active === false
       }
     }
     "returns empty list when there are no cash points" in empty_set {

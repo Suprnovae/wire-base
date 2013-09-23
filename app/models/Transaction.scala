@@ -14,8 +14,6 @@ abstract class Event
 
 case class Deposit(date: Date) extends Event
 
-case class Withdrawal(date: Date) extends Event
-
 case class Receiver(
   name: String,
   phonenumber: String,
@@ -78,7 +76,7 @@ object Transaction extends Model {
         Receiver(rn, rp, rc),
         Sender(sn, sp, sl, sc, sa, None, se),
         Deposit(td), //td
-        if (tw.isDefined) Some(Withdrawal(tw.get)) else None,
+        Withdrawal.findByTransactionId(id),
         t,
         c
       )
@@ -138,17 +136,6 @@ object Transaction extends Model {
     Transaction.findById(id) match {
       case Some(t) => if ((t.receiver.name+secret+code).isBcrypted(t.tokenHash)) true else false
       case None    => false
-    }
-  }
-  def withdraw(id: UUID): Transaction = {
-    DB.withConnection { implicit c => 
-      val count = SQL("""
-        UPDATE transactions
-        SET withdrawn_at = CURRENT_TIMESTAMP
-        WHERE id = {id} AND withdrawn_at IS NULL""").on('id -> id).executeUpdate()
-      val bogey = Transaction.findById(id)
-      if((count==0) && (bogey != None)) throw new AlreadyWithdrawnException()
-      bogey.get
     }
   }
   // TODO: make this a Try(Transaction)
