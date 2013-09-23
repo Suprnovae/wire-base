@@ -18,13 +18,6 @@ import play.api.test.Helpers._
 import scala.util.{ Random, Try }
 
 class TransactionSpec extends Specification {
-  step {
-    running(FakeApplication()) {
-      DB.withConnection { implicit c =>
-        SQL("""DELETE FROM transactions""").executeUpdate()
-      }
-    }
-  }
   implicit def rowToUUID: Column[UUID] = {
     Column.nonNull[UUID] { (value, meta) =>
       value match {
@@ -288,8 +281,8 @@ class TransactionSpec extends Specification {
     def before {
       running(FakeApplication()) {
         DB.withConnection { implicit c =>
-          SQL("""DELETE FROM transactions CASCADE""").executeUpdate()
           SQL("""DELETE FROM withdrawals CASCADE""").executeUpdate()
+          SQL("""DELETE FROM transactions CASCADE""").executeUpdate()
           SQL("""DELETE FROM cash_points CASCADE""").executeUpdate()
         }
       }
