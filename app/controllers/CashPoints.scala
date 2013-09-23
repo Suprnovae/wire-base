@@ -116,8 +116,29 @@ object CashPoints extends BaseController {
   }
 
   def modify(id: Any, active: Boolean) = SecureAction { implicit request =>
-    println(active)
-    Conflict
+    implicit val cashpointWrites = new Writes[CashPoint] {
+      def writes(t: CashPoint): JsValue = {
+        Json.obj(
+          "id"       -> JsString(t.id.toString),
+          "serial"   -> JsString(t.serial)
+        )
+      }
+    }
+
+    val uuid: UUID = id match {
+      case k: UUID => k
+      case k: String => UUID.fromString(k)
+      case k => UUID.fromString(k.toString)
+    }
+    
+    if(CashPoint.modify(uuid, active).isDefined) {
+      request match {
+        case Accepts.Html() => Ok(html.cashpoints.detail(CashPoint.findById(uuid).get))
+        case Accepts.Json() => Ok(Json.toJson(CashPoint.findById(uuid).get))
+      }
+    } else {
+      Conflict
+    }
   }
 
   def history(id: Any) = SecureAction { implicit request =>
