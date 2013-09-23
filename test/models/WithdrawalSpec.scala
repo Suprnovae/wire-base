@@ -64,18 +64,82 @@ class WithdrawalSpec extends Specification {
             Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
             Some("The ATM near the NYSE at 11 Wall Street")
           )
-          println(t)
-          println(p)
           val new_ids = insert(t.get, p.get)
           val new_id = new_ids.head
-          println(new_ids)
           Withdrawal.findById(new_id).isDefined === true
         }
         ok
       }
     }
     "be retrievable by transaction id" in { pending }
-    "fails when adding withdrawal without references" in { pending }
+    "succeed on valid transaction and cashpoint" in empty_set {
+      running(FakeApplication()) {
+        val t = Transaction.create(
+          400,
+          Receiver("Christopher Wallace", "1238293842", "US"),
+          Sender("Ella Fitzgerald", "2838384848", "US", "Atlanta", "Bourgeoisie Lane", None, "ella@example.com"),
+          "boondocks"
+        )
+        t.isDefined === true
+        val id = t.get.id
+        Transaction.findById(id).get.withdrawal.isDefined === false
+        val p = CashPoint.create(
+          "US_NYC_MANH_WALLSTR_0012",
+          Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
+          Some("The ATM near the NYSE at 11 Wall Street")
+        )
+        p.isDefined === true
+        CashPoint.modify(p.get.id, true).get.active === true
+
+        val wt = Withdrawal.create(t.get, p.get)
+        wt.isDefined === true
+        val result = Transaction.findById(t.get.id).get
+        result.withdrawal.get.date.after(result.deposit.date) === true
+      }
+    }
+    "fail with invalid transaction" in empty_set {
+      running(FakeApplication()) {
+        val p = CashPoint.create(
+          "US_NYC_MANH_WALLSTR_0012",
+          Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
+          Some("The ATM near the NYSE at 11 Wall Street")
+        )
+        val t = Transaction (
+          UUID.randomUUID,
+          2000,
+          Receiver("Elvis Presley", "1238293842", "US"),
+          Sender("Frank Sinatra", "283877821219", "US", "New York", "1st St 123", None, "ratpack@example.com"),
+          Deposit(new Date(1230L)),
+          None,
+          "secrets kill",
+          "obama"
+        )
+        p.isDefined === true
+        Try(Withdrawal.create(t, p.get)).isFailure === true // must throwA[NoSuchElementException]
+      }
+    }
+    "fail on already withdrawn transaction" in empty_set {
+      running(FakeApplication()) {
+        val t = Transaction.create(
+          2290,
+          Receiver("Huey Freeman", "10921923", "US"),
+          Sender("Riley Freeman", "1290192031", "US", "Atlanta", "Bourgeoisie Lane", None, "ella@example.com"),
+          "boondocks"
+        )
+        t.isDefined === true
+        val p = CashPoint.create(
+          "US_NYC_MANH_WALLSTR_0012",
+          Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
+          Some("The ATM near the NYSE at 11 Wall Street")
+        )
+        p.isDefined === true
+        val wd = Withdrawal.create(t.get, p.get)
+        wd.isDefined === true
+        val date = wd.get.date
+        Try(Withdrawal.create(t.get, p.get)).isFailure === true //.get must throwA[AlreadyWithdrawnException]
+        Transaction.findById(t.get.id).get.withdrawal.get.date === date
+      }
+    }
   }
 
   object empty_set extends Before {

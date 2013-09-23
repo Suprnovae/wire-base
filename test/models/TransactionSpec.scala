@@ -117,60 +117,6 @@ class TransactionSpec extends Specification {
         t.get.receiver.country === "US"
       }
     }
-    "be withdrawable" in empty_set {
-      running(FakeApplication()) {
-        val t = Transaction.create(
-          400,
-          Receiver("Christopher Wallace", "1238293842", "US"),
-          Sender("Ella Fitzgerald", "2838384848", "US", "Atlanta", "Bourgeoisie Lane", None, "ella@example.com"),
-          "boondocks"
-        )
-        t.isDefined === true
-        val id = t.get.id
-        Transaction.findById(id).get.withdrawal.isDefined === false
-        val p = CashPoint.create(
-          "US_NYC_MANH_WALLSTR_0012",
-          Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
-          Some("The ATM near the NYSE at 11 Wall Street")
-        )
-        p.isDefined === true
-        val wt = Transaction.withdraw(id, p.get)
-        wt.withdrawal.isDefined === true
-        wt.withdrawal.get.date.after(wt.deposit.date) === true
-      }
-    }
-    "fail withdraw with invalid UUID" in empty_set {
-      running(FakeApplication()) {
-        val p = CashPoint.create(
-          "US_NYC_MANH_WALLSTR_0012",
-          Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
-          Some("The ATM near the NYSE at 11 Wall Street")
-        )
-        p.isDefined === true
-        Transaction.withdraw(new UUID(0, 0), p.get) must throwA[NoSuchElementException]
-        Try(Transaction.withdraw(new UUID(0, 0), p.get)).isSuccess === false
-      }
-    }
-    "fail withdraw on already withdrawn transaction" in empty_set {
-      running(FakeApplication()) {
-        val t = Transaction.create(
-          2290,
-          Receiver("Huey Freeman", "10921923", "US"),
-          Sender("Riley Freeman", "1290192031", "US", "Atlanta", "Bourgeoisie Lane", None, "ella@example.com"),
-          "boondocks"
-        )
-        t.isDefined === true
-        val p = CashPoint.create(
-          "US_NYC_MANH_WALLSTR_0012",
-          Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
-          Some("The ATM near the NYSE at 11 Wall Street")
-        )
-        p.isDefined === true
-        val wd = Transaction.withdraw(t.get.id, p.get).withdrawal.get.date
-        Transaction.withdraw(t.get.id, p.get) must throwA[AlreadyWithdrawnException]
-        Transaction.findById(t.get.id).get.withdrawal.get.date === wd
-      }
-    }
     "returns empty list when there are no transaction entries" in empty_set {
       running(FakeApplication()) {
         Transaction.findAll.isEmpty === true
@@ -229,7 +175,7 @@ class TransactionSpec extends Specification {
           Some("The ATM near the NYSE at 11 Wall Street")
         )
         p.isDefined === true
-        Try(Transaction.withdraw(t.get.id, p.get)).isSuccess === true
+        Try(Withdrawal.create(t.get, p.get).get).isSuccess === true
         Transaction.findByTokens(code, secret).isDefined === false
       }
     }
@@ -342,9 +288,9 @@ class TransactionSpec extends Specification {
     def before {
       running(FakeApplication()) {
         DB.withConnection { implicit c =>
-          SQL("""DELETE FROM withdrawals""").executeUpdate()
-          SQL("""DELETE FROM transactions""").executeUpdate()
-          SQL("""DELETE FROM cash_points""").executeUpdate()
+          SQL("""DELETE FROM transactions CASCADE""").executeUpdate()
+          SQL("""DELETE FROM withdrawals CASCADE""").executeUpdate()
+          SQL("""DELETE FROM cash_points CASCADE""").executeUpdate()
         }
       }
     }

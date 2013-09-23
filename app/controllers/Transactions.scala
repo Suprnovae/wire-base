@@ -169,9 +169,9 @@ object Transactions extends BaseController {
       case k => CashPoint.findById(UUID.fromString(k.toString))
     }
 
-    val withdrawalAttempt: Try[Transaction] = {
+    val withdrawalAttempt: Try[Withdrawal] = {
       if(Transaction.validate(uuid, code, secret)) {
-        Try(Transaction.withdraw(uuid, point.get))
+        Try(Withdrawal.create(Transaction.findById(uuid).get, point.get).get)
       } else {
         Try(throw new Exception("Transaction tokens not validated"))
       }
