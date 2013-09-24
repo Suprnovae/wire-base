@@ -2,6 +2,7 @@ package controllers
 
 import java.util.UUID
 import models._
+import org.apache.commons.codec.binary.Base64
 import org.apache.commons.lang3.StringUtils
 import play.api._
 import play.api.data._
@@ -14,18 +15,37 @@ import views._
 
 class BaseController extends Controller {
 
+  implicit class UserHelper(request: Request[AnyContent]) {
+    def getUserCredentials: List[String] = {
+      val a = request.headers.get("Authorization").get.split(" ").drop(1)
+      new String(Base64.decodeBase64(a.headOption.getOrElse("").getBytes)).split(":").toList
+    }
+
+    def validateUser: Boolean  = {
+      println(request.getUserCredentials)
+      request.getUserCredentials match {
+        case u :: p :: Nil => User.validate(u, p)
+        case _ => false
+      }
+    }
+
+    // TODO: Test this baby
+    def getUser: Option[User] = {
+      if(request.validateUser) {
+        User.findByHandle(request.getUserCredentials.headOption.getOrElse(""))
+      } else {
+        None
+      }
+    }
+  }
+
   def SecureAction(f: Request[AnyContent] => Result): Action[AnyContent] = {
     Action { request =>
       val hdr = request.headers.get("x-forwarded-proto")
       if((Play.isProd && (hdr.isDefined && StringUtils.contains(hdr.get, "https"))) || Play.isDev || Play.isTest) {
-        request.headers.get("Authorization").flatMap { auth =>
-          auth.split(" ").drop(1).headOption.filter { encoded =>
-            new String(org.apache.commons.codec.binary.Base64.decodeBase64(encoded.getBytes)).split(":").toList match {
-              case u :: p :: Nil => User.validate(u, p)
-              case _ => false
-            }
-          }.map(_ => f(request))
-        }.getOrElse {
+        if(request.validateUser) {
+          f(request)
+        } else {
           Unauthorized.withHeaders("WWW-Authenticate" -> """Basic realm="Secured"""")
         }
       } else {

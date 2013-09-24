@@ -37,6 +37,7 @@ object CashPoints extends BaseController {
       }
     }
 
+    request getUserCredentials
     val cashpoints = CashPoint.findAll
     render {
       case Accepts.Html() => Ok(html.cashpoints.index(cashpoints))

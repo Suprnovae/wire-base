@@ -242,8 +242,6 @@ class TransactionSpec extends BaseSpecification {
     }
 
     "require authentication before manipulating the object set" in { todo }
-    // Withdrawals... move this test to withdrawals
-
     "be accessible to wire admins only" in { todo }
   }
 }
