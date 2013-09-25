@@ -72,7 +72,7 @@ class UserSpec extends Specification {
       }
     }
     "be instantiable" in {
-      val user = User (
+      val user = new User (
         UUID.randomUUID,
         "kwame",
         "UNKNOWN",
@@ -125,6 +125,16 @@ class UserSpec extends Specification {
         User.validate("wire", "wow!") === true
       }
     }
+    "respond to type helpers" in empty_set {
+      running(FakeApplication()) {
+        val user = User.create("sawyer", "Hey there, freckles!")
+        user.isSuccess === true
+        user.get.isAdmin === false
+        user.get.isClerk === false
+        user.get.isClient === false
+      }
+    }
+    "have a cashpoint if an CashPoint clerk" in { todo }
   }
 
   object empty_set extends Before {

@@ -8,12 +8,22 @@ import play.api.db.DB
 import play.api.Play.current
 import scala.util.Try;
 
-case class User(
-  id: UUID,
-  handle: String,
-  status: String,
-  secretHash: String
-)
+
+class User(
+  uuid: UUID,
+  user_handle: String,
+  user_status: String,
+  hash: String
+) {
+  def id = uuid
+  def handle = user_handle
+  def secretHash = hash
+  def status = None
+
+  def isAdmin: Boolean = { false }
+  def isClerk: Boolean = { false }
+  def isClient: Boolean = { false }
+}
 
 object User extends Model {
   val simple = {
@@ -23,7 +33,7 @@ object User extends Model {
     get[String]("users.status")~
     get[Date]("users.created_at") map {
       case id~handle~secret~status~created_at =>
-      User(
+      new User(
         id,
         handle,
         status,
@@ -47,7 +57,6 @@ object User extends Model {
             'handle -> handle,
             'secret -> (handle+password).bcrypt
           ).executeInsert[List[User]](User.simple *)
-          println("result is + " + res.head.toString)
           User.findById(res.head.id).get
         }
     )
