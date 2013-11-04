@@ -40,7 +40,7 @@ object CashPoints extends BaseController {
     request getUserCredentials
     val cashpoints = CashPoint.findAll
     render {
-      case Accepts.Html() => Ok(html.cashpoints.index(cashpoints))
+      case Accepts.Html() => Ok(html.cashpoints.index(cashpoints, request getUser))
       case Accepts.Json() => Ok(Json.toJson(cashpoints))
     }
   }
@@ -75,7 +75,7 @@ object CashPoints extends BaseController {
         )
         if(p.isDefined) {
           request match {
-            case Accepts.Html() => Created(html.cashpoints.detail(p.get))
+            case Accepts.Html() => Created(html.cashpoints.detail(p.get, request getUser))
             case Accepts.Json() => Created(Json.toJson(p.get))
           }
         } else {
@@ -107,10 +107,10 @@ object CashPoints extends BaseController {
     val point = CashPoint.findById(uuid)
     render {
       if(point.isDefined) {
-        case Accepts.Html() => Ok(html.cashpoints.detail(point.get))
+        case Accepts.Html() => Ok(html.cashpoints.detail(point.get, request getUser))
         case Accepts.Json() => Ok(Json.toJson(point.get))
       } else {
-        case Accepts.Html() => NotFound(html.common.notfound())
+        case Accepts.Html() => NotFound(html.common.notfound(request getUser))
         case _              => NotFound(Json.toJson("Not found"))
       }
     }
@@ -134,7 +134,7 @@ object CashPoints extends BaseController {
     
     if(CashPoint.modify(uuid, active).isDefined) {
       request match {
-        case Accepts.Html() => Ok(html.cashpoints.detail(CashPoint.findById(uuid).get))
+        case Accepts.Html() => Ok(html.cashpoints.detail(CashPoint.findById(uuid).get, request getUser))
         case Accepts.Json() => Ok(Json.toJson(CashPoint.findById(uuid).get))
       }
     } else {

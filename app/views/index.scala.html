@@ -1,6 +1,6 @@
-@(message: String)
+@(message: String, user: Option[User])
 
-@main("Welcome to the Wire") {
+@main("Welcome to the Wire", user) {
   <div class="jumbotron" style="background-color: inherit;">
     <div class="container">
       <h1>Get Wired!</h1>

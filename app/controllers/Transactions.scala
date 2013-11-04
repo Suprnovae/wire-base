@@ -29,14 +29,14 @@ object Transactions extends BaseController {
     if(code.isEmpty && secret.isEmpty) {
       val transactions = Transaction.findAll
       render {
-        case Accepts.Html() => Ok(html.transactions.index(transactions))
+        case Accepts.Html() => Ok(html.transactions.index(transactions, request getUser))
         case Accepts.Json() => Ok(Json.toJson(transactions))
       }
     } else {
       val transaction = Transaction.findByTokens(code, secret)
       if(transaction.isDefined) {
         render {
-          case Accepts.Html() => Ok(html.transactions.detail(transaction.get))
+          case Accepts.Html() => Ok(html.transactions.detail(transaction.get, request getUser))
           case Accepts.Json() => Ok(Json.toJson(transaction.get))
         }
       } else {
@@ -67,10 +67,10 @@ object Transactions extends BaseController {
     val transaction = Transaction.findById(uuid)
     render {
       if(transaction.isDefined) {
-        case Accepts.Html() => Ok(html.transactions.detail(transaction.get))
+        case Accepts.Html() => Ok(html.transactions.detail(transaction.get, request getUser))
         case Accepts.Json() => Ok(Json.toJson(transaction.get))
       } else {
-        case Accepts.Html() => NotFound(html.common.notfound())
+        case Accepts.Html() => NotFound(html.common.notfound(request getUser))
         case _              => NotFound(Json.toJson("Not found"))
       }
     }
@@ -131,7 +131,7 @@ object Transactions extends BaseController {
         )
         if(t.isDefined) {
           request match {
-            case Accepts.Html() => Created(html.transactions.detail(t.get))
+            case Accepts.Html() => Created(html.transactions.detail(t.get, request getUser))
             case Accepts.Json() => Created(Json.toJson(t.get))
           }
         } else {

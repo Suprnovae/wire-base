@@ -1,6 +1,6 @@
-@(cashpoint: CashPoint)
+@(cashpoint: CashPoint, user: Option[User])
 
-@main("CashPoint " + cashpoint.location.address){
+@main("CashPoint " + cashpoint.location.address, user){
   <div class="panel" style="margin: 0 10px 10px 10px;">
     <div class="panel-heading"><h1>Location</h1></div>
     <ul class="list-group">

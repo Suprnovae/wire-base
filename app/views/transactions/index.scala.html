@@ -1,6 +1,6 @@
-@(transactions: Seq[Transaction])
+@(transactions: Seq[Transaction], user: Option[User])
 
-@main("Transactions"){
+@main("Transactions", user){
   @views.html.transactions.actionbar()
   <div class="list-group" style="margin: 0 10px 10px 10px;">
     @transactions.map { transaction =>
