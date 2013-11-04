@@ -131,10 +131,12 @@ class UserSpec extends Specification {
         user.isSuccess === true
         user.get.isAdmin === false
         user.get.isClerk === false
-        user.get.isClient === false
+        user.get.isClient === true
       }
     }
-    "have a cashpoint if an CashPoint clerk" in { todo }
+    "have a cashpoint if an CashPointClerk" in { todo }
+    "should return user of the CashPointClerk type if appropriate" in { todo }
+    "should return User of the Admin type if appropriate" in { todo }
   }
 
   object empty_set extends Before {

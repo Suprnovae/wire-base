@@ -16,8 +16,9 @@ import views._
 class BaseController extends Controller {
 
   implicit class UserHelper(request: Request[AnyContent]) {
+    // TODO: Test request without Auth header
     def getUserCredentials: List[String] = {
-      val a = request.headers.get("Authorization").get.split(" ").drop(1)
+      val a = request.headers.get("Authorization").getOrElse("").split(" ").drop(1)
       new String(Base64.decodeBase64(a.headOption.getOrElse("").getBytes)).split(":").toList
     }
 

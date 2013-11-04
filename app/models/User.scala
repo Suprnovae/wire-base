@@ -13,16 +13,19 @@ class User(
   uuid: UUID,
   user_handle: String,
   user_status: String,
-  hash: String
+  hash: String,
+  user_role: Int = 0
 ) {
   def id = uuid
   def handle = user_handle
   def secretHash = hash
-  def status = None
+  def status = user_status 
 
-  def isAdmin: Boolean = { false }
-  def isClerk: Boolean = { false }
-  def isClient: Boolean = { false }
+  def isSuspended: Boolean = { false }
+
+  def isAdmin: Boolean =  { if (user_role == 2) true else false }
+  def isClerk: Boolean =  { if (user_role == 1) true else false }
+  def isClient: Boolean = { if (user_role == 0) true else false }
 }
 
 object User extends Model {
@@ -31,34 +34,36 @@ object User extends Model {
     get[String]("users.handle")~
     get[String]("users.secret")~
     get[String]("users.status")~
+    get[Int]("users.class")~
     get[Date]("users.created_at") map {
-      case id~handle~secret~status~created_at =>
+      case id~handle~secret~status~role~created_at =>
       new User(
         id,
         handle,
         status,
-        secret
+        secret,
+        role
       )
     }
   }
 
   def create(handle:String, password:String): Try[User] = {
     Try(
-        DB.withConnection { implicit connection =>
-          val res = SQL("""
-            INSERT INTO users (
-              handle,
-              secret
-            ) values (
-              {handle},
-              {secret}
-            )"""
-          ).on(
-            'handle -> handle,
-            'secret -> (handle+password).bcrypt
-          ).executeInsert[List[User]](User.simple *)
-          User.findById(res.head.id).get
-        }
+      DB.withConnection { implicit connection =>
+        val res = SQL("""
+          INSERT INTO users (
+            handle,
+            secret
+          ) values (
+            {handle},
+            {secret}
+          )"""
+        ).on(
+          'handle -> handle,
+          'secret -> (handle+password).bcrypt
+        ).executeInsert[List[User]](User.simple *)
+        User.findById(res.head.id).get
+      }
     )
   }
 
@@ -85,6 +90,7 @@ object User extends Model {
   def validate(handle: String, password: String): Boolean = {
     User.findByHandle(handle) match {
       case Some(t) => if ((handle+password).isBcrypted(t.secretHash)) true else false
+      // default credentials
       case None => if(handle == "wire" && password == "wow!") true else false
       case _ => false
     }
