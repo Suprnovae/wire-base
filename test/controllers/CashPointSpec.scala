@@ -15,14 +15,18 @@ import play.api.Play.current
 import play.api.test._
 import play.api.test.Helpers._
 
-class CashPointSpec extends Specification {
+class CashPointSpec extends BaseSpecification {
   "/cashpoints" should {
     "render the result as json upon request" in {
       running(FakeApplication()) {
-        val headers = FakeHeaders(Seq(
-          "ACCEPT" -> Seq("application/json")
-        ))
-        val request = FakeRequest(GET, "/cashpoints", headers, "")
+        val request = FakeRequest(
+          GET,
+          "/transactions", 
+          new FakeHeaders((headers.toMap ++ Map(
+            "ACCEPT" -> Seq("application/json")
+          )).toSeq),
+          ""
+        )
         val page = route(request).get
         status(page) must equalTo(OK)
         contentType(page) must beSome.which(_ == "application/json")
@@ -31,12 +35,14 @@ class CashPointSpec extends Specification {
 
     "render the index page" in {
       running(FakeApplication()) {
-        val page = route(FakeRequest(GET, "/cashpoints")).get
+        val page = route(FakeRequest(GET, "/cashpoints", headers, "")).get
         status(page) must equalTo(OK)
         contentType(page) must beSome.which(_ == "text/html")
       }
     }
+
     "send 404 on requesting details with non-existent id" in { todo }
+
     "returns the resource" in empty_set {
       running(FakeApplication()) {
         val p = CashPoint.create(
@@ -52,14 +58,21 @@ class CashPointSpec extends Specification {
   
         p.isDefined === true
         val uuid = p.get.id
-        val headers = FakeHeaders(Seq("ACCEPT" -> Seq("application/json")))
   
         val url = "/cashpoints/" + uuid.toString
-        var page = route(FakeRequest(GET, url)).get
+        var page = route(FakeRequest(GET, url, headers, "")).get
         status(page) must equalTo(OK)
         contentType(page) must beSome.which(_ == "text/html")
-  
-        page = route(FakeRequest(GET, url, headers, "")).get
+
+        val request = FakeRequest(
+          GET,
+          "/transactions", 
+          new FakeHeaders((headers.toMap ++ Map(
+            "ACCEPT" -> Seq("application/json")
+          )).toSeq),
+          ""
+        )
+        page = route(request).get
         status(page) must equalTo(OK)
         contentType(page) must beSome.which(_ == "application/json")
       }
@@ -85,7 +98,7 @@ class CashPointSpec extends Specification {
         form.bind(params).hasErrors must beFalse
         form.errors.size must equalTo(0)
     
-        val page = route(FakeRequest(POST, url)
+        val page = route(FakeRequest(POST, url, headers, "")
           .withFormUrlEncodedBody(params.toList: _*)
         ).get
     
@@ -110,12 +123,12 @@ class CashPointSpec extends Specification {
         //CashPoint.findById(p.get.id).get.active === false
 
         status(route(FakeRequest(
-          PUT, url + "?active=true"
+          PUT, url + "?active=true", headers, ""
         )).get) must equalTo(OK)
         CashPoint.findById(p.get.id).get.active === true
 
         status(route(FakeRequest(
-          PUT, url + "?active=false"
+          PUT, url + "?active=false", headers, ""
         )).get) must equalTo(OK)
         CashPoint.findById(p.get.id).get.active === false
       }
@@ -125,17 +138,5 @@ class CashPointSpec extends Specification {
     "should only present overview to cashpoint admins" in { todo }
     "should be creatable by wire admins" in { todo }
     "should allow the state to be modified by wire admins" in { todo }
-  }
-
-  object empty_set extends Before {
-    def before {
-      running(FakeApplication()) {
-        DB.withConnection { implicit c =>
-          SQL("""DELETE FROM withdrawals""").executeUpdate()
-          SQL("""DELETE FROM transactions""").executeUpdate()
-          SQL("""DELETE FROM cash_points""").executeUpdate()
-        }
-      }
-    }
   }
 }

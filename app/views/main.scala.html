@@ -1,4 +1,4 @@
-@(title: String)(content: Html)
+@(title: String, user: Option[User])(content: Html)
 
 <!DOCTYPE html>
 
@@ -23,7 +23,13 @@
         <ul class="nav navbar-nav">
           <li @if(title == "Transactions") { class="active" }><a href="@routes.Transactions.index()">Transactions</a></li>
           <li @if(title == "CashPoints") { class="active" }><a href="@routes.CashPoints.index()">Cashpoints</a></li>
+          @if(user.isDefined && user.get.isAdmin) {
           <li><a href="#">Users</a></li>
+          }
+        </ul>
+
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="/profile">@if(user) { @user.get.handle } else { anonymous }</a></li>
         </ul>
       </div>
     </nav>

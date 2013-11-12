@@ -72,7 +72,7 @@ class UserSpec extends Specification {
       }
     }
     "be instantiable" in {
-      val user = User (
+      val user = new User (
         UUID.randomUUID,
         "kwame",
         "UNKNOWN",
@@ -125,6 +125,19 @@ class UserSpec extends Specification {
         User.validate("wire", "wow!") === true
       }
     }
+    "respond to type helpers" in empty_set {
+      running(FakeApplication()) {
+        val user = User.create("sawyer", "Hey there, freckles!")
+        user.isSuccess === true
+        user.get.isAdmin === false
+        user.get.isClerk === false
+        user.get.isClient === true
+      }
+    }
+    "have a cashpoint if an CashPointClerk" in { todo }
+    "should return user of the CashPointClerk type if appropriate" in { todo }
+    "should return User of the Admin type if appropriate" in { todo }
+    "is only accepted if the handle is a valid email address" in { todo }
   }
 
   object empty_set extends Before {

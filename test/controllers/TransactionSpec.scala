@@ -2,6 +2,7 @@ package test.controllers
 
 import java.util.UUID
 import models._
+import org.apache.commons.codec.binary.Base64
 import org.specs2.mutable._
 import play.api.data._
 import play.api.data.Forms._
@@ -9,16 +10,19 @@ import play.api.mvc._
 import play.api.test._
 import play.api.test.Helpers._
 
-class TransactionSpec extends Specification {
-  
+class TransactionSpec extends BaseSpecification {
   "/transactions" should {
 
     "render the result as json upon request" in {
       running(FakeApplication()) {
-        val headers = FakeHeaders(Seq(
-          "ACCEPT" -> Seq("application/json")
-        ))
-        val request = FakeRequest(GET, "/transactions", headers, "")
+        val request = FakeRequest(
+          GET,
+          "/transactions", 
+          new FakeHeaders((headers.toMap ++ Map(
+            "ACCEPT" -> Seq("application/json")
+          )).toSeq),
+          ""
+        )
         val page = route(request).get
         status(page) must equalTo(OK)
         contentType(page) must beSome.which(_ == "application/json")
@@ -27,9 +31,26 @@ class TransactionSpec extends Specification {
 
     "render the index page" in {
       running(FakeApplication()) {
-        val page = route(FakeRequest(GET, "/transactions")).get
+        val page = route(FakeRequest(GET, "/transactions", headers, "")).get
         status(page) must equalTo(OK)
         contentType(page) must beSome.which(_ == "text/html")
+      }
+    }
+
+    "returns the Unauthorized status when credentials are invalid" in {
+      running(FakeApplication()) {
+        status(route(FakeRequest(GET, "/transactions", FakeHeaders(Seq(
+          "AUTHORIZATION" -> Seq("Basic " + new String(Base64.encodeBase64("wire:later!".getBytes)))
+          )),
+          ""
+        )).get) must equalTo(UNAUTHORIZED)
+
+        status(route(FakeRequest(GET, "/transactions", FakeHeaders(Seq(
+          )),
+          ""
+        )).get) must equalTo(UNAUTHORIZED)
+
+        status(route(FakeRequest(GET, "/transactions", headers, "")).get) must equalTo(OK)
       }
     }
 
@@ -37,7 +58,7 @@ class TransactionSpec extends Specification {
       running(FakeApplication()) {
         // html
         val uuid = (new UUID(0, 0)).toString
-        val request = FakeRequest(GET, "/transactions/" + uuid)
+        val request = FakeRequest(GET, "/transactions/" + uuid, headers, "")
         status(route(request).get) must equalTo(NOT_FOUND)
 
         val page = route(request).get
@@ -49,8 +70,14 @@ class TransactionSpec extends Specification {
       running(FakeApplication()) {
         // json
         val uuid = (new UUID(0, 0)).toString
-        val headers = FakeHeaders(Seq("ACCEPT" -> Seq("application/json")))
-        val request = FakeRequest(GET, "/transactions/" + uuid, headers, "")
+        val request = FakeRequest(
+          GET,
+          "/transactions/" + uuid,
+          new FakeHeaders((headers.toMap ++ Map(
+            "ACCEPT" -> Seq("application/json")
+          )).toSeq),
+          ""
+        )
 
         val page = route(request).get
         status(page) must equalTo(NOT_FOUND)
@@ -69,14 +96,20 @@ class TransactionSpec extends Specification {
 
         t.isDefined === true
         val uuid = t.get.id
-        val headers = FakeHeaders(Seq("ACCEPT" -> Seq("application/json")))
 
         val url = "/transactions/" + uuid.toString
-        var page = route(FakeRequest(GET, url)).get
+        var page = route(FakeRequest(GET, url, headers, "")).get
         status(page) must equalTo(OK)
         contentType(page) must beSome.which(_ == "text/html")
 
-        page = route(FakeRequest(GET, url, headers, "")).get
+        page = route(FakeRequest(
+          GET,
+          url,
+          new FakeHeaders((headers.toMap ++ Map(
+            "ACCEPT" -> Seq("application/json")
+          )).toSeq),
+          ""
+        )).get
         status(page) must equalTo(OK)
         contentType(page) must beSome.which(_ == "application/json")
       }
@@ -103,7 +136,7 @@ class TransactionSpec extends Specification {
 
         
         var page = route(FakeRequest(
-          GET, "/transactions?code=" + code + "&secret=TimeWillTell"
+          GET, "/transactions?code=" + code + "&secret=TimeWillTell", headers, ""
         )).get
 
         status(page) must equalTo(OK)
@@ -150,7 +183,7 @@ class TransactionSpec extends Specification {
         form.bind(params).hasErrors must beFalse
         form.errors.size must equalTo(0)
 
-        val page = route(FakeRequest(POST, url)
+        val page = route(FakeRequest(POST, url, headers, "")
           .withFormUrlEncodedBody(params.toList: _*)
         ).get
 
@@ -171,37 +204,37 @@ class TransactionSpec extends Specification {
         t.isDefined === true
         val url = "/transactions/" + t.get.id.toString
         val code = t.get.transactionCode
-        status(route(FakeRequest(PUT, url)).get) must equalTo(CONFLICT)
+        status(route(FakeRequest(PUT, url, headers, "")).get) must equalTo(CONFLICT)
         Transaction.findById(t.get.id).get.withdrawal.isDefined === false
 
         status(route(FakeRequest(
-          PUT, url + "?secret=" + "green+light"
+          PUT, url + "?secret=" + "green+light", headers, ""
         )).get) must equalTo(CONFLICT)
         Transaction.findById(t.get.id).get.withdrawal.isDefined === false
 
         status(route(FakeRequest(
-          PUT, url + "?code=" + code
+          PUT, url + "?code=" + code, headers, ""
         )).get) must equalTo(CONFLICT)
         Transaction.findById(t.get.id).get.withdrawal.isDefined === false
 
         status(route(FakeRequest(
-          PUT, url + "?code=121233211" + "&secret=" + "green+light"
+          PUT, url + "?code=121233211" + "&secret=" + "green+light", headers, ""
         )).get) must equalTo(CONFLICT)
         Transaction.findById(t.get.id).get.withdrawal.isDefined === false
 
         status(route(FakeRequest(
-          PUT, url + "?code=" + code + "&secret=" + "joker"
+          PUT, url + "?code=" + code + "&secret=" + "joker", headers, ""
         )).get) must equalTo(CONFLICT)
         Transaction.findById(t.get.id).get.withdrawal.isDefined === false
 
         status(route(FakeRequest(
-          PUT, url + "?code=" + code + "&secret=" + "green+light"
+          PUT, url + "?code=" + code + "&secret=" + "green+light", headers, ""
         )).get) must equalTo(OK)
         Transaction.findById(t.get.id).get.withdrawal.isDefined === true
 
         val old_withdrawal = Transaction.findById(t.get.id).get.withdrawal
         status(route(FakeRequest(
-          PUT, url + "?code=" + code + "&secret=" + "green+light"
+          PUT, url + "?code=" + code + "&secret=" + "green+light", headers, ""
         )).get) must equalTo(CONFLICT)
         Transaction.findById(t.get.id).get.withdrawal.isDefined === true
         Transaction.findById(t.get.id).get.withdrawal must equalTo(old_withdrawal)
@@ -209,9 +242,6 @@ class TransactionSpec extends Specification {
     }
 
     "require authentication before manipulating the object set" in { todo }
-    // Withdrawals... move this test to withdrawals
-
     "be accessible to wire admins only" in { todo }
-
   }
 }

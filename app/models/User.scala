@@ -8,12 +8,30 @@ import play.api.db.DB
 import play.api.Play.current
 import scala.util.Try;
 
-case class User(
-  id: UUID,
+case class UserForm(
   handle: String,
-  status: String,
-  secretHash: String
+  secret: String,
+  secret_repeat: String
 )
+
+class User(
+  uuid: UUID,
+  user_handle: String,
+  user_status: String,
+  hash: String,
+  role: Int = 0
+) {
+  def id = uuid
+  def handle = user_handle
+  def secretHash = hash
+  def status = user_status 
+
+  def isSuspended: Boolean = { false }
+
+  def isAdmin: Boolean =  { if (role == 2) true else false }
+  def isClerk: Boolean =  { if (role == 1) true else false }
+  def isClient: Boolean = { if (role == 0) true else false }
+}
 
 object User extends Model {
   val simple = {
@@ -21,36 +39,44 @@ object User extends Model {
     get[String]("users.handle")~
     get[String]("users.secret")~
     get[String]("users.status")~
+    get[Int]("users.class")~
     get[Date]("users.created_at") map {
-      case id~handle~secret~status~created_at =>
-      User(
+      case id~handle~secret~status~role~created_at =>
+      new User(
         id,
         handle,
         status,
-        secret
+        secret,
+        role
       )
     }
   }
 
   def create(handle:String, password:String): Try[User] = {
     Try(
-        DB.withConnection { implicit connection =>
-          val res = SQL("""
-            INSERT INTO users (
-              handle,
-              secret
-            ) values (
-              {handle},
-              {secret}
-            )"""
-          ).on(
-            'handle -> handle,
-            'secret -> (handle+password).bcrypt
-          ).executeInsert[List[User]](User.simple *)
-          println("result is + " + res.head.toString)
-          User.findById(res.head.id).get
-        }
+      DB.withConnection { implicit connection =>
+        val res = SQL("""
+          INSERT INTO users (
+            handle,
+            secret
+          ) values (
+            {handle},
+            {secret}
+          )"""
+        ).on(
+          'handle -> handle,
+          'secret -> (handle+password).bcrypt
+        ).executeInsert[List[User]](User.simple *)
+        User.findById(res.head.id).get
+      }
     )
+  }
+
+  def count: Long = {
+    DB.withConnection { implicit c =>
+      SQL("""SELECT COUNT(*) AS c FROM users""")
+        .apply().head[Long]("c")
+    }
   }
 
   def findAll: Seq[User] = {
@@ -76,6 +102,7 @@ object User extends Model {
   def validate(handle: String, password: String): Boolean = {
     User.findByHandle(handle) match {
       case Some(t) => if ((handle+password).isBcrypted(t.secretHash)) true else false
+      // default credentials
       case None => if(handle == "wire" && password == "wow!") true else false
       case _ => false
     }
