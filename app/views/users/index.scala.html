@@ -1,0 +1,16 @@
+@(user: Option[User])
+
+@main("Profile", user){
+  <div class="panel" style="margin: 0 10px 10px 10px;">
+    <div class="panel-heading"><h1>&euro; @user.get.handle</h1></div>
+    <!--<div class="panel-body">
+    </div>-->
+    <div class="list-group">
+      <div class="list-group-item">
+        <h2 class="list-group-item-heading">Details</h2>
+        <p class="list-group-item-text">admin or not</p>
+        <p class="list-group-item-text">email</p>
+      </div>
+    </div>
+  </div>
+}
