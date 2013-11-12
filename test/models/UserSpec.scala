@@ -137,6 +137,7 @@ class UserSpec extends Specification {
     "have a cashpoint if an CashPointClerk" in { todo }
     "should return user of the CashPointClerk type if appropriate" in { todo }
     "should return User of the Admin type if appropriate" in { todo }
+    "is only accepted if the handle is a valid email address" in { todo }
   }
 
   object empty_set extends Before {

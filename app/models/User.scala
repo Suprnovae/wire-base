@@ -8,13 +8,18 @@ import play.api.db.DB
 import play.api.Play.current
 import scala.util.Try;
 
+case class UserForm(
+  handle: String,
+  secret: String,
+  secret_repeat: String
+)
 
 class User(
   uuid: UUID,
   user_handle: String,
   user_status: String,
   hash: String,
-  user_role: Int = 0
+  role: Int = 0
 ) {
   def id = uuid
   def handle = user_handle
@@ -23,9 +28,9 @@ class User(
 
   def isSuspended: Boolean = { false }
 
-  def isAdmin: Boolean =  { if (user_role == 2) true else false }
-  def isClerk: Boolean =  { if (user_role == 1) true else false }
-  def isClient: Boolean = { if (user_role == 0) true else false }
+  def isAdmin: Boolean =  { if (role == 2) true else false }
+  def isClerk: Boolean =  { if (role == 1) true else false }
+  def isClient: Boolean = { if (role == 0) true else false }
 }
 
 object User extends Model {
@@ -65,6 +70,13 @@ object User extends Model {
         User.findById(res.head.id).get
       }
     )
+  }
+
+  def count: Long = {
+    DB.withConnection { implicit c =>
+      SQL("""SELECT COUNT(*) AS c FROM users""")
+        .apply().head[Long]("c")
+    }
   }
 
   def findAll: Seq[User] = {
