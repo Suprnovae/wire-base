@@ -3,10 +3,52 @@
 @main("Welcome to the Wire", user) {
   <div class="jumbotron" style="background-color: inherit;">
     <div class="container">
-      <h1>Get Wired!</h1>
-      <p>At this very moment we're working on a solution that will simplify the way we send money to our folks far away. Having you here brings us much joy and we consider your possible input extremely valuable.</p>
-      <p><a href="http://supr.nu">Suprnovae</a> is the development agency currently responsible for sculpting the prototype and is always interested in learning more from people who have suggestions, tips or simply want to get involved. Don't hesitate to contact us regarding the possibility to test the solution.</p>
-      <p><a href="mailto:wire@@supr.nu" class="btn btn-primary btn-lg">Get in Touch</a></p>
+      <div class="jumbotron" style="text-align: center">
+        <h1 style="text-align: center;">Wire Some Money Now!</h1>
+        <p>Wire money from your smartphone to a pal overseas with hardly any effort</p>
+        <a href="#start" class="btn btn-lg btn-success">Start Wiring!</a>
+      </div>
+      <div class="row">
+        <h1 style="text-align: center;">How it Works!</h1>
+        <div class="col-lg-4">
+          <h2>Specify Receiver</h2>
+          <p>Select the intended receiver in over 20 countries across the globe</p>
+        </div>
+        <div class="col-lg-4">
+          <h2>Complete Payment</h2>
+          <p>Complete the payment of the intended sum with any payment option of your liking</p>
+        </div>
+        <div class="col-lg-4">
+          <h2>Watch and smile!</h2>
+          <p>Cash pick-ups at a counter or fund storage in a mobile wallet. It's the receiver's choice!</p>
+          <!--<p>The recipient receives the option to either pick up the money at any of the hundreds of counters accross the globe or accept the funds to his or her mobile wallet. Our apps make this experience seemless.</p>-->
+        </div>
+      </div>
+      <div class="row">
+        <h1 style="text-align: center;">About Wired!</h1>
+        <p>At this very moment we're working on this solution that will simplify the way we send money to our folks far away. Having you here brings us much joy and we consider your possible input extremely valuable.</p>
+        <p><a href="http://supr.nu">Suprnovae</a> is the development agency currently responsible for sculpting the prototype and is always interested in learning more from people who have suggestions, tips or simply want to get involved. Don't hesitate to contact us regarding the possibility to test the solution.</p>
+        <p><a href="mailto:wire@@supr.nu" class="btn btn-primary btn-lg">Get in Touch</a></p>
+      </div>
+      <div id="start" class="row" style="text-align: center;">
+        <h1 style="text-align: center;">Sign Up</h1>
+        <p>Create your account and enjoy the new way of sending money</p>
+        <form action="/signup" method="post">
+          <div class="form-group">
+            <label for="emailAddress" style="display:none">Email address</label>
+            <input type="email" class="form-control" id="emailAddress" name="handle" placeholder="Email address">
+          </div>
+          <div class="form-group">
+            <label for="password" style="display:none">Password</label>
+            <input type="password" class="form-control" id="password" name="secret" placeholder="Enter password">
+          </div>
+          <div class="form-group">
+            <label for="passwordRepeat" style="display:none">Repeat your password</label>
+            <input type="password" class="form-control" id="passwordRepeat" name="secret_repeat" placeholder="Re-enter your password... just to confirm">
+          </div>
+          <button type="submit" class="btn btn-lg btn-primary col-sm-7">Start Transferring Money</button>
+        </form>
+      </div>
     </div>
   </div>
 }

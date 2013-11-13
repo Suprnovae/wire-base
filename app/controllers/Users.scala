@@ -40,7 +40,7 @@ object Users extends BaseController {
     }
   }
 
-  def add = SecureAction { implicit request =>
+  def add = Action { implicit request =>
     implicit val userWrites = new Writes[User] {
       def writes(u: User): JsValue = {
         Json.obj(
@@ -58,7 +58,7 @@ object Users extends BaseController {
         }
       },
       validForm => {
-        val u = User.create("user@example.com", "secret")
+        val u = User.create(validForm._1, validForm._2)
         if(u.isSuccess) {
           request match {
             case Accepts.Html() => Created(html.users.index(Some(u.get)))

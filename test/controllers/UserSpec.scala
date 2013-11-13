@@ -33,10 +33,13 @@ class UserSpec extends BaseSpecification {
         form.bind(params).hasErrors must beFalse
         form.errors.size must equalTo(0)
 
-        status(route(FakeRequest(POST, url, headers, "")
+        val nonAuthHeader = FakeHeaders(Seq())
+        status(route(FakeRequest(POST, url, nonAuthHeader, "")
           .withFormUrlEncodedBody(params.toList: _*)
         ).get) must equalTo(CREATED)
+
         User.count === count+1
+        User.findByHandle("bank@wire.local").isDefined === true
       }
     }
 
