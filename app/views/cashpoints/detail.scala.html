@@ -41,7 +41,7 @@
 <div class="col-md-8">
   <div class="panel" style="margin: 0 10px 10px 10px;">
     <div class="panel-heading"><h1>Payout</h1></div>
-    <form class="form-inline" style="padding: 10px;" action="/withdraw" method="get">
+    <form class="form-inline" style="padding: 10px;" action="/withdrawals" method="post">
       <div class="form-group">
         <label class="sr-only" for="transactionCode">Transaction code</label>
         <input type="text" class="form-control" name="code" id="transactionCode" placeholder="Transaction code">
@@ -50,7 +50,7 @@
         <label class="sr-only" for="secretCode">Secret</label>
         <input type="password" class="form-control" name="secret" id="secretCode" placeholder="Secret code">
       </div>
-      <input type="hidden" class="form-control" name="cash_point" value="@cashpoint.id">
+      <input type="hidden" class="form-control" name="cashpoint_id" value="@cashpoint.id">
       <button type="submit" class="btn btn-success">Complete Pending Transaction</button>
     </form>
   </div>

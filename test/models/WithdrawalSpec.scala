@@ -60,11 +60,13 @@ class WithdrawalSpec extends Specification {
             Sender("Riley Freeman", "1290192031", "US", "Atlanta", "Bourgeoisie Lane", None, "ella@example.com"),
             "boondocks"
           )
+          t.isDefined === true
           val p = CashPoint.create(
             "US_NYC_MANH_WALLSTR_0012",
             Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
             Some("The ATM near the NYSE at 11 Wall Street")
           )
+          p.isDefined === true
           val new_ids = insertWithdrawal(t.get, p.get)
           val new_id = new_ids.head
 

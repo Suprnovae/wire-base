@@ -11,8 +11,9 @@ import scala.math.BigDecimal
 import scala.util.Random
 
 case class WithdrawalForm(
-  transaction: Transaction,
-  cash_point: CashPoint
+  secret: String,
+  code: String,
+  cashpoint_id: String
 )
 
 case class Withdrawal(

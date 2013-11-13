@@ -14,6 +14,8 @@ GET     /transactions/:id           controllers.Transactions.getItem(id: String)
 #PUT     /transactions/:id           controllers.Transactions.withdraw(id: String, code: String ?= "", secret: String ?= "", cash_point: String)
 PUT     /withdraw                   controllers.Transactions.withdraw(code: String ?= "", secret: String ?= "", cash_point: String)
 
+POST    /withdrawals                controllers.Withdrawals.add
+
 GET     /cashpoints                 controllers.CashPoints.index
 POST    /cashpoints                 controllers.CashPoints.add
 GET     /cashpoints/:id             controllers.CashPoints.getItem(id: String)
