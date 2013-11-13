@@ -22,6 +22,7 @@ class BaseSpecification extends Specification {
           SQL("""DELETE FROM withdrawals CASCADE""").executeUpdate()
           SQL("""DELETE FROM transactions CASCADE""").executeUpdate()
           SQL("""DELETE FROM cash_points CASCADE""").executeUpdate()
+          SQL("""DELETE FROM users CASCADE""").executeUpdate()
         }
       }
     }

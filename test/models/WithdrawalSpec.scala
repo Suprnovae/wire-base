@@ -34,11 +34,12 @@ class WithdrawalSpec extends Specification {
     }
   }
   val parser = { get[UUID]("id") }
+
   "Withdrawal" should {
-    "be retrieved by id" in empty_set {
+    "be retrievable by id" in empty_set {
       running(FakeApplication()) {
         DB.withConnection { implicit connection =>
-          def insert(transaction:Transaction, cash_point:CashPoint):List[UUID] = {
+          def insertWithdrawal(transaction:Transaction, cash_point:CashPoint):List[UUID] = {
             SQL("""
               INSERT INTO withdrawals (
                 cash_point_id,
@@ -64,9 +65,50 @@ class WithdrawalSpec extends Specification {
             Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
             Some("The ATM near the NYSE at 11 Wall Street")
           )
-          val new_ids = insert(t.get, p.get)
+          val new_ids = insertWithdrawal(t.get, p.get)
           val new_id = new_ids.head
+
           Withdrawal.findById(new_id).isDefined === true
+        }
+        ok
+      }
+    }
+    "should be listable by cash point" in empty_set {
+      running(FakeApplication()) {
+        DB.withConnection { implicit connection =>
+          def insertWithdrawal(transaction:Transaction, cash_point:CashPoint):List[UUID] = {
+            SQL("""
+              INSERT INTO withdrawals (
+                cash_point_id,
+                transaction_id
+              ) values (
+                {cash_point},
+                {transaction}
+              )"""
+            ).on(
+              "cash_point"  -> cash_point.id, 
+              "transaction" -> transaction.id
+            ).executeInsert(parser *)
+          }
+          
+          val p = CashPoint.create(
+            "US_NYC_MANH_WALLSTR_0012",
+            Location(new Point(232, 433), "Wall Street 12", "New York City", "US"),
+            Some("The ATM near the NYSE at 11 Wall Street")
+          )
+          insertWithdrawal(Transaction.create(
+            2290,
+            Receiver("Bob Jones", "1789213828", "US"),
+            Sender("Mina Tikra", "1290192031", "US", "Miami", "Sunway Strip", None, "mina@example.com"),
+            "sunshine"
+          ).get, p.get)
+          insertWithdrawal(Transaction.create(
+            1400,
+            Receiver("James Earl", "0918235819293", "US"),
+            Sender("Sandra Pine", "19230188832", "US", "Palo Alto", "Infinity Lane", None, "sandra@example.com"),
+            "Pinewood Derby"
+          ).get, p.get)
+          Withdrawal.findByCashPoint(p.get).length === 2
         }
         ok
       }
