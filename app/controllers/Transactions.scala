@@ -12,33 +12,7 @@ import play.api.Play.current
 import scala.util._
 import views._
 
-object Transactions extends Controller {
-
-  def SecureAction(f: Request[AnyContent] => Result): Action[AnyContent] = {
-    Action { request =>
-      val hdr = request.headers.get("x-forwarded-proto")
-      if(Play.isProd && (hdr.isDefined && StringUtils.contains(hdr.get, "https"))) {
-        request.headers.get("Authorization").flatMap { auth =>
-          auth.split(" ").drop(1).headOption.filter { encoded =>
-            new String(org.apache.commons.codec.binary.Base64.decodeBase64(encoded.getBytes)).split(":").toList match {
-              case u :: p :: Nil if u == "jim" && "smit" == p => true
-              case _ => false
-            }
-          }.map(_ => f(request))
-        }.getOrElse {
-          Unauthorized.withHeaders("WWW-Authenticate" -> """Basic realm="Secured"""")
-        }
-      } else {
-        // TODO: Redirect to SSL in Production
-        if(Play.isProd) {
-          Redirect("https://"+request.host+request.uri)
-        } else {
-          f(request)
-        }
-      }
-    }
-  }
-
+object Transactions extends BaseController {
   def index(code: String, secret: String, page: Int = 0, maxItems: Int = 100) = SecureAction { implicit request =>
     implicit val transactionWrites = new Writes[Transaction] {
       def writes(t: Transaction): JsValue = {
@@ -55,14 +29,14 @@ object Transactions extends Controller {
     if(code.isEmpty && secret.isEmpty) {
       val transactions = Transaction.findAll
       render {
-        case Accepts.Html() => Ok(html.transactions.index(transactions))
+        case Accepts.Html() => Ok(html.transactions.index(transactions, request getUser))
         case Accepts.Json() => Ok(Json.toJson(transactions))
       }
     } else {
       val transaction = Transaction.findByTokens(code, secret)
       if(transaction.isDefined) {
         render {
-          case Accepts.Html() => Ok(html.transactions.detail(transaction.get))
+          case Accepts.Html() => Ok(html.transactions.detail(transaction.get, request getUser))
           case Accepts.Json() => Ok(Json.toJson(transaction.get))
         }
       } else {
@@ -93,10 +67,10 @@ object Transactions extends Controller {
     val transaction = Transaction.findById(uuid)
     render {
       if(transaction.isDefined) {
-        case Accepts.Html() => Ok(html.transactions.detail(transaction.get))
+        case Accepts.Html() => Ok(html.transactions.detail(transaction.get, request getUser))
         case Accepts.Json() => Ok(Json.toJson(transaction.get))
       } else {
-        case Accepts.Html() => NotFound(html.common.notfound())
+        case Accepts.Html() => NotFound(html.common.notfound(request getUser))
         case _              => NotFound(Json.toJson("Not found"))
       }
     }
@@ -157,7 +131,7 @@ object Transactions extends Controller {
         )
         if(t.isDefined) {
           request match {
-            case Accepts.Html() => Created(html.transactions.detail(t.get))
+            case Accepts.Html() => Created(html.transactions.detail(t.get, request getUser))
             case Accepts.Json() => Created(Json.toJson(t.get))
           }
         } else {
@@ -171,7 +145,7 @@ object Transactions extends Controller {
   }
 
   //def form = Ok(html.transactions.form)
-  def withdraw(id: Any, code: String, secret: String) = SecureAction { implicit r =>
+  def withdraw(id: Any, code: String, secret: String, cash_point: Any) = SecureAction { implicit r =>
     implicit val transactionWrites = new Writes[Transaction] {
       def writes(t: Transaction): JsValue = {
         Json.obj(
@@ -189,10 +163,15 @@ object Transactions extends Controller {
       case k: String => UUID.fromString(k)
       case k => UUID.fromString(k.toString)
     }
+    val point: Option[CashPoint] = cash_point match {
+      case k: UUID => CashPoint.findById(k)
+      case k: String => CashPoint.findById(UUID.fromString(k))
+      case k => CashPoint.findById(UUID.fromString(k.toString))
+    }
 
-    val withdrawalAttempt: Try[Transaction] = {
+    val withdrawalAttempt: Try[Withdrawal] = {
       if(Transaction.validate(uuid, code, secret)) {
-        Try(Transaction.withdraw(uuid))
+        Try(Withdrawal.create(Transaction.findById(uuid).get, point.get).get)
       } else {
         Try(throw new Exception("Transaction tokens not validated"))
       }

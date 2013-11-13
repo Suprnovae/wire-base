@@ -1,6 +1,6 @@
-@(transaction: Transaction)
+@(transaction: Transaction, user: Option[User])
 
-@main("Transactions"){
+@main("Transactions", user){
   <div class="panel" style="margin: 0 10px 10px 10px;">
     <div class="panel-heading"><h1>&euro; @transaction.amount</h1></div>
     <!--<div class="panel-body">

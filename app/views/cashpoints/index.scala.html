@@ -1,0 +1,10 @@
+@(cashpoints: Seq[CashPoint], user: Option[User])
+
+@main("CashPoints", user){
+  @views.html.cashpoints.actionbar()
+  <div class="list-group" style="margin: 0 10px 10px 10px;">
+    @cashpoints.map { cashpoint =>
+      @views.html.cashpoints.item(cashpoint)
+    }
+  </div>
+}

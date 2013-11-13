@@ -1,11 +1,11 @@
-@(message: String)
+@(message: String, user: Option[User])
 
-@main("Welcome to the Wire") {
+@main("Welcome to the Wire", user) {
   <div class="jumbotron" style="background-color: inherit;">
     <div class="container">
       <h1>Get Wired!</h1>
-      <p>At this very moment we're working on a solution that will simplify the way we send money to our folks far away. Having you here brings us much joy and </p>
-      <p><a href="supr.nu">Suprnovae</a> is the development agency currently responsible for sculpting a working prototype and is always interested in learning more from people who have suggestions, tips or simply want to get involved. Don't hesitate to contact us regarding the possibility to demo the solution.</p>
+      <p>At this very moment we're working on a solution that will simplify the way we send money to our folks far away. Having you here brings us much joy and we consider your possible input extremely valuable.</p>
+      <p><a href="http://supr.nu">Suprnovae</a> is the development agency currently responsible for sculpting the prototype and is always interested in learning more from people who have suggestions, tips or simply want to get involved. Don't hesitate to contact us regarding the possibility to test the solution.</p>
       <p><a href="mailto:wire@@supr.nu" class="btn btn-primary btn-lg">Get in Touch</a></p>
     </div>
   </div>
