@@ -3,21 +3,26 @@
 @main("Transactions", user){
   <div class="panel" style="margin: 0 10px 10px 10px;">
     <div class="panel-heading"><h1>&euro; @transaction.amount</h1></div>
-    <!--<div class="panel-body">
-    </div>-->
+    @if(transaction.withdrawal.isDefined) {
+    <div class="alert alert-success">Withdrawn on: @transaction.withdrawal.get.date</div>
+    } else {
+    <div class="alert alert-warning">Transaction has not yet been withdrawn</div>
+    }
     <div class="list-group">
       <div class="list-group-item">
         <h2 class="list-group-item-heading">Receiver</h2>
-        <p class="list-group-item-text">@transaction.receiver.name</p>
+        <p class="list-group-item-text">Name: @transaction.receiver.name</p>
+        <p class="list-group-item-text">Phonenumber: @transaction.receiver.phonenumber</p>
       </div>
       <div class="list-group-item">
         <h2 class="list-group-item-heading">Sender</h2>
-        <p class="list-group-item-text">@transaction.sender.name</p>
+        <p class="list-group-item-text">Name: @transaction.sender.name</p>
+        <p class="list-group-item-text">Phonenumber: @transaction.sender.phonenumber</p>
       </div>
       <div class="list-group-item">
         <h2 class="list-group-item-heading">Details</h2>
         <p class="list-group-item-text">Deposited on: @transaction.deposit.date</p>
-        <p class="list-group-item-text">Withdrawal information not available</p>
+        <p class="list-group-item-text">Transaction code: @transaction.transactionCode</p>
       </div>
     </div>
   </div>
