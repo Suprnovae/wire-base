@@ -192,56 +192,6 @@ class TransactionSpec extends BaseSpecification {
       }
     }
 
-    "withdraws the entry" in {
-      running(FakeApplication()) {
-        var t = Transaction.create(
-          40000,
-          Receiver("Daisy Buchanan", "686278912", "US"),
-          Sender("Jay Gatsby", "199288333", "US", "New York", "Unknown", None, "jay@gatsby.com"),
-          "green light"
-        )
-
-        t.isDefined === true
-
-        val url = "/withdraw"
-        val code = t.get.transactionCode
-        status(route(FakeRequest(PUT, url, headers, "")).get) must equalTo(CONFLICT)
-        Transaction.findById(t.get.id).get.withdrawal.isDefined === false
-
-        status(route(FakeRequest(
-          PUT, url + "?secret=" + "green+light", headers, ""
-        )).get) must equalTo(CONFLICT)
-        Transaction.findById(t.get.id).get.withdrawal.isDefined === false
-
-        status(route(FakeRequest(
-          PUT, url + "?code=" + code, headers, ""
-        )).get) must equalTo(CONFLICT)
-        Transaction.findById(t.get.id).get.withdrawal.isDefined === false
-
-        status(route(FakeRequest(
-          PUT, url + "?code=121233211" + "&secret=" + "green+light", headers, ""
-        )).get) must equalTo(CONFLICT)
-        Transaction.findById(t.get.id).get.withdrawal.isDefined === false
-
-        status(route(FakeRequest(
-          PUT, url + "?code=" + code + "&secret=" + "joker", headers, ""
-        )).get) must equalTo(CONFLICT)
-        Transaction.findById(t.get.id).get.withdrawal.isDefined === false
-
-        status(route(FakeRequest(
-          PUT, url + "?code=" + code + "&secret=" + "green+light", headers, ""
-        )).get) must equalTo(OK)
-        Transaction.findById(t.get.id).get.withdrawal.isDefined === true
-
-        val old_withdrawal = Transaction.findById(t.get.id).get.withdrawal
-        status(route(FakeRequest(
-          PUT, url + "?code=" + code + "&secret=" + "green+light", headers, ""
-        )).get) must equalTo(CONFLICT)
-        Transaction.findById(t.get.id).get.withdrawal.isDefined === true
-        Transaction.findById(t.get.id).get.withdrawal must equalTo(old_withdrawal)
-      }
-    }
-
     "require authentication before manipulating the object set" in { todo }
     "be accessible to wire admins only" in { todo }
   }
