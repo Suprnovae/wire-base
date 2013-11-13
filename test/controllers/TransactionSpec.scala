@@ -202,7 +202,8 @@ class TransactionSpec extends BaseSpecification {
         )
 
         t.isDefined === true
-        val url = "/transactions/" + t.get.id.toString
+
+        val url = "/withdraw"
         val code = t.get.transactionCode
         status(route(FakeRequest(PUT, url, headers, "")).get) must equalTo(CONFLICT)
         Transaction.findById(t.get.id).get.withdrawal.isDefined === false

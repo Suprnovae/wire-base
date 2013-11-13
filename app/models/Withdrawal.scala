@@ -22,8 +22,34 @@ case class Withdrawal(
   date: Date
 )
 
+case class DetailedWithdrawal(
+  id: UUID,
+  transaction_id: UUID,
+  cashpoint_id: UUID,
+  withdrawal_date: Date,
+  deposit_date: Date,
+  amount: BigDecimal,
+  receiver: Receiver
+)
+
 object Withdrawal extends Model {
   val complete = {
+    get[UUID]("withdrawals.id")~
+    get[UUID]("withdrawals.transaction_id")~
+    get[UUID]("withdrawals.cash_point_id")~
+    get[Date]("withdrawals.created_at")~
+    get[Date]("transactions.deposited_at")~
+    get[BigDecimal]("transactions.amount")~
+    get[String]("transactions.receiver_name")~
+    get[String]("transactions.receiver_phonenumber")~
+    get[String]("transactions.receiver_country") map {
+      case id~t~cp~c~d~a~rn~rp~rc => 
+      DetailedWithdrawal(id, t, cp, c, d, a,
+        Receiver(rn, rp, rc)
+      )
+    }
+  }
+  val simple = {
     get[UUID]("withdrawals.id")~
     get[UUID]("withdrawals.transaction_id")~
     get[UUID]("withdrawals.cash_point_id")~
@@ -32,7 +58,6 @@ object Withdrawal extends Model {
       Withdrawal(id, t, cp, c)
     }
   }
-  val simple = complete
 
   def findAll(): Seq[Withdrawal] = {
     DB.withConnection { implicit c =>
@@ -52,6 +77,26 @@ object Withdrawal extends Model {
       SQL("SELECT * FROM withdrawals WHERE transaction_id = {id}").on(
         'id -> id
       ).as(Withdrawal.simple.singleOpt)
+    }
+  }
+  def findByCashPoint(cash_point: CashPoint): Seq[DetailedWithdrawal] = {
+    DB.withConnection { implicit c =>
+      SQL("""
+        SELECT 
+          withdrawals.id, 
+          withdrawals.transaction_id, 
+          withdrawals.cash_point_id, 
+          withdrawals.created_at,
+          transactions.amount,
+          transactions.receiver_name,
+          transactions.receiver_phonenumber,
+          transactions.receiver_country,
+          transactions.deposited_at
+        FROM withdrawals 
+        INNER JOIN transactions ON (withdrawals.transaction_id = transactions.id)
+        WHERE cash_point_id = {id}""").on(
+        'id -> cash_point.id
+      ).as(Withdrawal.complete *)
     }
   }
   def count: Long = {
