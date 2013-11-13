@@ -1,13 +1,13 @@
 @(transaction: Transaction, user: Option[User])
 
 @main("Transactions", user){
+  @if(transaction.withdrawal.isDefined) {
+  <div class="alert alert-success">Withdrawn on: @transaction.withdrawal.get.date</div>
+  } else {
+  <div class="alert alert-warning">Transaction has not yet been withdrawn</div>
+  }
   <div class="panel" style="margin: 0 10px 10px 10px;">
     <div class="panel-heading"><h1>&euro; @transaction.amount</h1></div>
-    @if(transaction.withdrawal.isDefined) {
-    <div class="alert alert-success">Withdrawn on: @transaction.withdrawal.get.date</div>
-    } else {
-    <div class="alert alert-warning">Transaction has not yet been withdrawn</div>
-    }
     <div class="list-group">
       <div class="list-group-item">
         <h2 class="list-group-item-heading">Receiver</h2>
